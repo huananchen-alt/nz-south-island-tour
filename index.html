@@ -35,6 +35,11 @@
   .seg button.on { background: var(--panel); color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,.15); }
   .fixed { font-weight: 600; color: var(--ink); }
   .seg.ppl { flex-wrap: wrap; }
+  .seg.mon { flex-wrap: wrap; }
+  .seg.mon button { padding: 4px 0; width: 30px; font-size: 12px; position: relative; }
+  .seg.mon button.peak::after { content: ''; position: absolute; top: 2px; right: 3px; width: 5px; height: 5px; border-radius: 50%; background: #e2780e; }
+  .season { grid-column: 1 / -1; font-size: 12px; margin-top: -2px; }
+  .season b { padding: 1px 8px; border-radius: 99px; color: #fff; margin-right: 6px; }
   .seg.ppl button { padding: 5px 0; width: 30px; font-variant-numeric: tabular-nums; }
   .vcard .cnt { display: inline-block; margin-left: 6px; padding: 0 7px; border-radius: 99px; background: var(--ink); color: #fff; font-size: 11px; font-weight: 600; }
 
@@ -199,10 +204,14 @@ function cheapestFleet() {
   walk(0, {});
   return best.fleet;
 }
-const fleetPrice = f => VEHICLES.reduce((s, v) => s + v.price * (f[v.id] || 0), 0);
+const season = () => SEASON.months[state.month];
+const seasonName = () => season().peak ? '旺季' : '淡季';
+const stayRate = id => Math.round(PLACES[id].stay * (season().peak ? 1 : SEASON.offStayFactor));
+const vprice = v => Math.round(v.price * (season().peak ? 1 : SEASON.offCarFactor));
+const fleetPrice = f => VEHICLES.reduce((s, v) => s + vprice(v) * (f[v.id] || 0), 0);
 const fleetLabel = f => VEHICLES.filter(v => f[v.id]).map(v => `${v.name}${f[v.id] > 1 ? ` × ${f[v.id]} 辆` : ''}`).join(' + ');
 const fleet = () => state.vehicle === 'auto' ? cheapestFleet() : { [state.vehicle]: cars(VEHICLES.find(v => v.id === state.vehicle)) };
-const state = { start: 'chc', route: 'central', people: 2, vehicle: 'auto', days: null, picks: {}, tourIdx: -1, playing: null };
+const state = { month: new Date().getMonth() + 1, start: 'chc', route: 'central', people: 2, vehicle: 'auto', days: null, picks: {}, tourIdx: -1, playing: null };
 
 // 按出发城市调整线路方向：单程线路反向，环线换起点；单独行程固定出发城市
 function orient(r) {
@@ -232,7 +241,7 @@ function routeStats(r) {
   const km = r.legs.reduce((s, _, i) => s + geo(r.stops[i], r.stops[i + 1]).km, 0);
   const drive = r.legs.reduce((a, b) => a + b, 0);
   const nights = r.nights.reduce((a, b) => a + b, 0);
-  const stay = r.stops.reduce((s, id, i) => s + PLACES[id].stay * r.nights[i], 0);
+  const stay = r.stops.reduce((s, id, i) => s + stayRate(id) * r.nights[i], 0);
   return { km, drive, nights, days: nights + 1, stay };
 }
 
@@ -273,7 +282,7 @@ function popupHtml(id, r) {
   const top = p.acts.slice(0, 3).map(a => `<li>${a.n} · ${a.p ? money(a.p) : '免费'} · ${a.d}</li>`).join('');
   return `<div class="pp"><h3>${p.name}</h3><div class="en">${p.en}</div>
     <div style="margin-top:6px">${p.intro}</div>
-    <div class="meta">${n ? `住 ${n} 晚 · 约 ${money(p.stay)}/人/晚` : '途经 / 一日游，不住宿'}</div>
+    <div class="meta">${n ? `住 ${n} 晚 · 约 ${money(stayRate(id))}/人/晚` : '途经 / 一日游，不住宿'}</div>
     <ul>${top}</ul>
     ${hasStars(r, id) ? `<div class="starbox">✨ <b>${STAR_SERVICE.title}</b><span class="warn">${STAR_SERVICE.disclaimer}</span></div>` : ''}</div>`;
 }
@@ -358,8 +367,11 @@ function renderTabs() {
   $('#tabs').innerHTML = `<div class="glabel">经典线路</div>${ROUTES.filter(r => r.type === 'main').map(tab).join('')}
     <div class="glabel">单独行程</div>${ROUTES.filter(r => r.type === 'side').map(tab).join('')}${tab({ id: 'all', name: '全览', sub: '线路对比', color: '#1d2327' })}
     <div class="start">${startHtml}</div>
+    <div class="start">出行月份 <span class="seg mon">${Object.keys(SEASON.months).map(m => `<button class="${+m === state.month ? 'on' : ''} ${SEASON.months[m].peak ? 'peak' : ''}" data-mon="${m}" title="${SEASON.months[m].peak ? '旺季' : '淡季'}：${SEASON.months[m].why}">${m}月</button>`).join('')}</span></div>
+    <div class="season"><b style="background:${season().peak ? '#e2780e' : '#1a9c6b'}">${state.month} 月 · ${seasonName()}</b>${season().why}${season().peak ? '' : `，住宿约 ${Math.round(SEASON.offStayFactor * 100) / 10} 折`}</div>
     <div class="start">出行人数 <span class="seg ppl">${Array.from({ length: MAX_PEOPLE }, (_, i) => i + 1).map(n => `<button class="${state.people === n ? 'on' : ''}" data-ppl="${n}">${n}</button>`).join('')}</span></div>`;
   $('#tabs').querySelectorAll('.tab').forEach(b => b.onclick = () => setRoute(b.dataset.id));
+  $('#tabs').querySelectorAll('[data-mon]').forEach(b => b.onclick = () => { state.month = +b.dataset.mon; const y = $('aside').scrollTop; render(); $('aside').scrollTop = y; });
   $('#tabs').querySelectorAll('[data-ppl]').forEach(b => b.onclick = () => setPeople(+b.dataset.ppl));
   $('#tabs').querySelectorAll('[data-start]').forEach(b => b.onclick = () => {
     if (state.start === b.dataset.start) return;
@@ -385,7 +397,7 @@ function vehicleHtml(days) {
       return `<div class="vcard ${state.vehicle === v.id ? 'on' : ''}" data-v="${v.id}">
         <div class="ico">${v.img}</div>
         <div><div class="vn">${v.name}${n > 1 ? `<span class="cnt">需 ${n} 辆</span>` : ''}</div><div class="vd">${v.note}</div></div>
-        <div class="vp">${money(v.price * n)}<small>${n > 1 ? `${money(v.price)} × ${n} 辆 / 天` : '每天'}</small></div></div>`;
+        <div class="vp">${money(vprice(v) * n)}<small>${n > 1 ? `${money(vprice(v))} × ${n} 辆 / 天` : '每天'}</small></div></div>`;
     }).join('')}</div>
   </section>`;
 }
@@ -447,7 +459,7 @@ function bindInquiry() {
     try {
       const body = {
         access_key: QUOTE_FORM.accessKey,
-        subject: `${QUOTE_FORM.subject}｜${f.name}｜${state.quote['线路']}｜${state.quote['出行人数']}`,
+        subject: `${QUOTE_FORM.subject}｜${f.name}｜${state.quote['线路']}｜${state.month}月｜${state.quote['出行人数']}`,
         from_name: '南岛包车报价页面',
         botcheck: form.botcheck.checked,
         '客人姓名': f.name, '微信/电话': f.contact, '客人邮箱': f.email || '未填写', '计划出发日期': f.date || '未填写', '其他需求': f.note || '无',
@@ -481,7 +493,7 @@ function renderRoute(r) {
     tl += `<div class="stop" data-i="${i}" style="--c:${r.color}">
       <div class="stop-h"><div class="num">${i + 1}</div>
         <div><div class="nm">${p.name}</div><div class="en">${p.en}</div></div>
-        <div class="tag">${n ? `<span class="pill stay">住 ${n} 晚 · ${money(p.stay)}/人/晚</span>` : `<span class="pill">${i === 0 ? '出发' : '途经'}</span>`}</div>
+        <div class="tag">${n ? `<span class="pill stay">住 ${n} 晚 · ${money(stayRate(id))}/人/晚</span>` : `<span class="pill">${i === 0 ? '出发' : '途经'}</span>`}</div>
       </div>
       ${repeat ? `<div class="intro">再次回到${p.name}${n ? '过夜' : ''}，活动见第 ${r.stops.indexOf(id) + 1} 站。</div>` : `
       <div class="intro">${p.intro}</div>
@@ -535,7 +547,7 @@ function renderRoute(r) {
         <div class="ln tot"><span>合计（NZD）</span><span>${money(total)}</span></div>
         <div class="ln"><span>人均</span><span>${money(total / state.people)}</span></div>
       </div>
-      <p class="fine">* 所有价格为新西兰元 (NZD) 旺季参考价，住宿按两人一间均摊；活动价格以各运营商官网为准；餐饮、机票、保险未计入。${starNights ? '星空/极光拍摄为免费赠送服务，不作保证，视天气状况而定。' : ''}</p>
+      <p class="fine">* 所有价格为新西兰元 (NZD) ${state.month} 月${seasonName()}参考价${season().peak ? '' : `（淡季住宿按 ${Math.round(SEASON.offStayFactor * 100) / 10} 折计算）`}，住宿按两人一间均摊；活动价格以各运营商官网为准；餐饮、机票、保险未计入。${starNights ? '星空/极光拍摄为免费赠送服务，不作保证，视天气状况而定。' : ''}</p>
       ${inquiryHtml(r)}
     </section>`;
 
@@ -544,6 +556,7 @@ function renderRoute(r) {
   state.quote = {
     '线路': `${r.name} · ${r.sub}`,
     '路线': r.stops.map(id => PLACES[id].name).join(' → '),
+    '出行月份': `${state.month} 月（${seasonName()}：${season().why}）`,
     '出行人数': `${state.people} 人`,
     '包车天数': `${days} 天（建议 ${s.days}天${s.nights}晚）`,
     '包车车辆': `${fleetLabel(fl)}（${money(fleetPrice(fl))}/天）`,
@@ -581,7 +594,7 @@ function renderAll() {
     <section>
       <h2>单独行程（可加在任意线路前后）</h2>
       <table class="cmp">${head}<tbody>${rows('side')}</tbody></table>
-      <p class="fine">* 按当前选择：${state.people} 人，${fleetLabel(fleet())}（${money(fleetPrice(fleet()))}/天），不含活动。</p>
+      <p class="fine">* 按当前选择：${state.month} 月${seasonName()}，${state.people} 人，${fleetLabel(fleet())}（${money(fleetPrice(fleet()))}/天），不含活动。</p>
     </section>
     <section>
       <h2>途经地一览</h2>

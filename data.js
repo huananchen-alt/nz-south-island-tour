@@ -238,3 +238,24 @@ const QUOTE_FORM = {
   accessKey: '71d88f11-8cbf-4f2c-9013-c9970375aecc',
   subject: '新西兰南岛包车报价咨询',
 };
+
+// 淡旺季（按出行月份）。旺季：春节、圣诞节、十一黄金周、中国暑假、澳新学校假期
+// 上面的住宿 / 包车价格按旺季填写；淡季按下面的折扣自动计算（1 = 不打折）
+const SEASON = {
+  offStayFactor: 0.8,   // 淡季住宿 8 折
+  offCarFactor: 1,      // 淡季包车价格不变
+  months: {
+    1:  { peak: true,  why: '春节（部分年份）· 圣诞新年 · 澳新暑假' },
+    2:  { peak: true,  why: '春节 · 新西兰盛夏' },
+    3:  { peak: false, why: '夏末初秋，游客减少' },
+    4:  { peak: true,  why: '澳新学校假期 · 复活节' },
+    5:  { peak: false, why: '深秋，人少景美' },
+    6:  { peak: false, why: '初冬，滑雪季刚开始' },
+    7:  { peak: true,  why: '中国暑假 · 澳新学校假期 · 滑雪季' },
+    8:  { peak: true,  why: '中国暑假 · 滑雪季' },
+    9:  { peak: false, why: '早春（月底起澳新学校假期）' },
+    10: { peak: true,  why: '十一黄金周 · 澳新学校假期' },
+    11: { peak: false, why: '春末，鲁冰花陆续开放' },
+    12: { peak: true,  why: '圣诞节 · 澳新暑假 · 鲁冰花季' },
+  },
+};
