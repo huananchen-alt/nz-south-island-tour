@@ -62,6 +62,13 @@
   .acts td.ck { width: 22px; }
   .acts .free { color: var(--ok); }
   .acts .t { font-size: 10px; color: var(--muted); border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; margin-left: 4px; white-space: nowrap; }
+  .starbox { margin: 8px 0 4px; padding: 8px 10px; border-radius: 10px; background: #14163a; color: #e8e9ff; font-size: 12.5px; }
+  .starbox b { color: #fff; }
+  .starbox .warn { display: block; margin-top: 4px; color: #b9bce6; font-size: 11.5px; }
+  .starbanner { margin-top: 12px; padding: 12px 14px; border-radius: 12px; background: linear-gradient(135deg, #14163a, #2b2f6b); color: #e8e9ff; font-size: 13px; }
+  .starbanner h3 { margin: 0 0 4px; font-size: 14px; color: #fff; }
+  .starbanner p { margin: 4px 0 0; }
+  .starbanner .warn { color: #ffd88a; font-size: 12px; }
   .leg { display: flex; align-items: center; gap: 10px; padding: 8px 0 8px 12px; margin-left: 12px; border-left: 3px dotted var(--c); cursor: pointer; color: var(--muted); font-size: 13px; }
   .leg:hover .drive { background: var(--c); color: #fff; }
   .leg .drive { background: var(--soft); color: var(--ink); border-radius: 8px; padding: 3px 10px; font-weight: 600; font-variant-numeric: tabular-nums; transition: background .15s; }
@@ -179,6 +186,7 @@ function orient(r) {
 }
 let OR = [];
 const active = () => OR.find(r => r.id === state.route);
+const hasStars = (r, id) => !!(r && r.stars && PLACES[id].stars);
 const fromTo = r => r.stops[0] === r.stops[r.stops.length - 1]
   ? `${PLACES[r.stops[0]].name}出发 · ${r.loop ? '环线' : '往返'}返回${PLACES[r.stops[0]].name}`
   : `${PLACES[r.stops[0]].name} → ${PLACES[r.stops[r.stops.length - 1]].name}`;
@@ -229,7 +237,8 @@ function popupHtml(id, r) {
   return `<div class="pp"><h3>${p.name}</h3><div class="en">${p.en}</div>
     <div style="margin-top:6px">${p.intro}</div>
     <div class="meta">${n ? `住 ${n} 晚 · 约 ${money(p.stay)}/人/晚` : '途经 / 一日游，不住宿'}</div>
-    <ul>${top}</ul></div>`;
+    <ul>${top}</ul>
+    ${hasStars(r, id) ? `<div class="starbox">✨ <b>${STAR_SERVICE.title}</b><span class="warn">${STAR_SERVICE.disclaimer}</span></div>` : ''}</div>`;
 }
 
 function drawActive() {
@@ -254,7 +263,7 @@ function drawActive() {
       const icon = L.divIcon({ className: '', iconSize: showAll ? [14, 14] : [30, 30], iconAnchor: showAll ? [7, 7] : [15, 15],
         html: `<div class="pin ${showAll ? 'small' : ''}" style="background:${r.color}">${label}</div>` });
       L.marker([p.lat, p.lng], { icon, riseOnHover: true }).addTo(activeLayer)
-        .bindTooltip(p.name, { permanent: true, direction: 'right', offset: [showAll ? 8 : 14, 0], className: 'nametip' })
+        .bindTooltip(p.name + (hasStars(showAll ? null : r, id) ? ' ✨' : ''), { permanent: true, direction: 'right', offset: [showAll ? 8 : 14, 0], className: 'nametip' })
         .bindPopup(popupHtml(id, showAll ? null : r))
         .on('click', () => { if (!showAll) markStop(r.stops.indexOf(id)); });
     });
@@ -371,6 +380,7 @@ function renderRoute(r) {
       </div>
       ${repeat ? `<div class="intro">再次回到${p.name}${n ? '过夜' : ''}，活动见第 ${r.stops.indexOf(id) + 1} 站。</div>` : `
       <div class="intro">${p.intro}</div>
+      ${hasStars(r, id) ? `<div class="starbox">✨ <b>${STAR_SERVICE.title}</b>（免费）<span class="warn">不保证，视当晚天气状况而定</span></div>` : ''}
       <table class="acts">${p.acts.map((a, k) => {
         const key = id + ':' + k;
         return `<tr><td class="ck"><input type="checkbox" data-k="${key}" ${picks[key] ? 'checked' : ''} title="加入报价"></td>
@@ -390,6 +400,12 @@ function renderRoute(r) {
   const car = v.price * days, stay = s.stay * state.people, act = actPP * state.people;
   const total = car + stay + act;
 
+  const starStops = r.stops.filter((id, i, a) => a.indexOf(id) === i && hasStars(r, id));
+  const starNights = r.stops.reduce((n, id, i) => n + (hasStars(r, id) ? r.nights[i] : 0), 0);
+  const banner = starStops.length ? `<div class="starbanner"><h3>✨ ${STAR_SERVICE.title} · 免费赠送</h3>
+    <p>提供地点：${starStops.map(id => PLACES[id].name).join('、')}</p>
+    <p>${STAR_SERVICE.detail}</p>
+    <p class="warn">⚠️ 声明：${STAR_SERVICE.disclaimer}</p></div>` : '';
   $('#content').innerHTML = `
     <section>
       <h2 style="color:${r.color}">${r.name} · ${r.sub}</h2>
@@ -401,6 +417,7 @@ function renderRoute(r) {
         <div class="stat"><div class="v">${Math.round(s.drive / 6) / 10}h</div><div class="k">纯驾车时长</div></div>
         <div class="stat"><div class="v">${money(s.stay)}</div><div class="k">每人住宿合计</div></div>
       </div>
+      ${banner}
     </section>
     <section><h2>📍 途经地与每段车程</h2><p class="fine" style="margin:-4px 0 10px">勾选活动可加入下方报价 · 点击站点或车程在地图上定位</p><div class="timeline">${tl}</div></section>
     ${vehicleHtml(days)}
@@ -409,10 +426,11 @@ function renderRoute(r) {
         <div class="ln"><span>包车 ${v.name} × ${days} 天</span><span>${money(car)}</span></div>
         <div class="ln"><span>住宿 ${s.nights} 晚 × ${state.people} 人</span><span>${money(stay)}</span></div>
         <div class="ln"><span>已选活动 ${money(actPP)}/人 × ${state.people} 人</span><span>${money(act)}</span></div>
+        ${starNights ? `<div class="ln"><span>✨ 星空/极光拍摄（最多 ${starNights} 晚，视天气）</span><span>免费</span></div>` : ''}
         <div class="ln tot"><span>合计（NZD）</span><span>${money(total)}</span></div>
         <div class="ln"><span>人均</span><span>${money(total / state.people)}</span></div>
       </div>
-      <p class="fine">* 所有价格为新西兰元 (NZD) 旺季参考价，住宿按两人一间均摊；活动价格以各运营商官网为准；餐饮、机票、保险未计入。</p>
+      <p class="fine">* 所有价格为新西兰元 (NZD) 旺季参考价，住宿按两人一间均摊；活动价格以各运营商官网为准；餐饮、机票、保险未计入。${starNights ? '星空/极光拍摄为免费赠送服务，不作保证，视天气状况而定。' : ''}</p>
     </section>`;
 
   document.querySelectorAll('.stop').forEach(e => e.onclick = ev => { if (ev.target.tagName !== 'INPUT') { stopTour(); state.tourIdx = +e.dataset.i; focusStop(+e.dataset.i); updateTourLbl(); } });

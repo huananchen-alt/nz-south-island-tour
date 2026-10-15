@@ -11,7 +11,7 @@ const PLACES = {
       { n: '植物园 + 哈格利公园漫步', p: 0, d: '1.5 小时', t: '自然' },
       { n: '复古电车环城游 Tram', p: 35, d: '1 小时', t: '城市' },
     ] },
-  tek: { name: '蒂卡波湖', en: 'Lake Tekapo', lat: -44.0047, lng: 170.4772, stay: 160,
+  tek: { stars: true, name: '蒂卡波湖', en: 'Lake Tekapo', lat: -44.0047, lng: 170.4772, stay: 160,
     intro: '牛奶蓝湖水 + 好牧羊人教堂 + 世界级暗夜星空保护区，11–12 月鲁冰花盛开。',
     acts: [
       { n: '好牧羊人教堂 Church of the Good Shepherd', p: 0, d: '30 分钟', t: '打卡' },
@@ -28,7 +28,14 @@ const PLACES = {
       { n: '塔斯曼冰川直升机徒步 Tasman Glacier Heli Hike', p: 795, d: '3.5 小时', t: '冰川' },
       { n: '埃德蒙·希拉里爵士高山中心', p: 25, d: '1 小时', t: '文化' },
     ] },
-  wan: { name: '瓦纳卡', en: 'Wanaka', lat: -44.7032, lng: 169.1321, stay: 140,
+  twz: { name: '特威泽尔', en: 'Twizel', lat: -44.2580, lng: 170.0990, stay: 130, stars: true,
+    intro: '麦肯齐盆地暗夜保护区里的宁静小镇，紧邻普卡基湖，是住宿、看星空的理想据点。',
+    acts: [
+      { n: '普卡基湖彼得观景点 Peter’s Lookout（远眺库克山）', p: 0, d: '30 分钟', t: '打卡' },
+      { n: '库克山高山三文鱼 Mt Cook Alpine Salmon', p: 30, d: '45 分钟', t: '美食' },
+      { n: '鲁阿塔尼瓦湖畔散步 Lake Ruataniwha', p: 0, d: '1 小时', t: '休闲' },
+    ] },
+  wan: { stars: true, name: '瓦纳卡', en: 'Wanaka', lat: -44.7032, lng: 169.1321, stay: 140,
     intro: '比皇后镇更安静的湖畔小镇，"孤独的树"所在地。',
     acts: [
       { n: '孤独的树 That Wanaka Tree', p: 0, d: '30 分钟', t: '打卡' },
@@ -38,7 +45,7 @@ const PLACES = {
       { n: '真枪射击体验 Real Guns NZ（卡德罗纳山谷）', p: 170, d: '2 小时', t: '刺激' },
       { n: '瓦纳卡湖皮划艇', p: 70, d: '2 小时', t: '休闲' },
     ] },
-  zqn: { name: '皇后镇', en: 'Queenstown', lat: -45.0312, lng: 168.6626, stay: 160,
+  zqn: { stars: true, name: '皇后镇', en: 'Queenstown', lat: -45.0312, lng: 168.6626, stay: 160,
     intro: '世界冒险之都，蹦极、喷射快艇发源地，湖光山色。',
     acts: [
       { n: '天空缆车 + 斜坡滑车 Skyline Gondola & Luge', p: 95, d: '2 小时', t: '观景' },
@@ -78,7 +85,7 @@ const PLACES = {
       { n: '法式小镇漫步 + 灯塔', p: 0, d: '1.5 小时', t: '城市' },
       { n: '鲑鱼 / 生蚝海鲜午餐', p: 50, d: '1 小时', t: '美食' },
     ] },
-  oam: { name: '奥马鲁', en: 'Oamaru', lat: -45.0975, lng: 170.9704, stay: 100,
+  oam: { stars: true, name: '奥马鲁', en: 'Oamaru', lat: -45.0975, lng: 170.9704, stay: 100,
     intro: '维多利亚式白石建筑小镇，蒸汽朋克之都，小蓝企鹅归巢。',
     acts: [
       { n: '小蓝企鹅归巢 Blue Penguin Colony', p: 45, d: '1.5 小时', t: '野生动物' },
@@ -91,7 +98,7 @@ const PLACES = {
       { n: '摩拉基大圆石海滩', p: 0, d: '1 小时', t: '打卡' },
       { n: 'Fleur’s Place 海鲜餐厅', p: 60, d: '1 小时', t: '美食' },
     ] },
-  dun: { name: '但尼丁', en: 'Dunedin', lat: -45.8788, lng: 170.5028, stay: 100,
+  dun: { stars: true, name: '但尼丁', en: 'Dunedin', lat: -45.8788, lng: 170.5028, stay: 100,
     intro: '"南半球的爱丁堡"，苏格兰风情大学城，奥塔哥半岛野生动物。',
     acts: [
       { n: '拉纳克城堡 Larnach Castle', p: 45, d: '2 小时', t: '文化' },
@@ -166,14 +173,21 @@ const PLACES = {
 // 每条线路：stops 为途经顺序（以基督城出发书写），nights 为每站住宿晚数（0 = 途经不住），
 // legs[i] 为 stops[i] → stops[i+1] 的驾车时长（分钟）。
 // type: 'main' 主线路（可切换基督城 / 皇后镇出发，自动反向或换起点）；'side' 单独行程（fixed = 固定出发城市）
+// 免费星空 / 极光拍摄服务（stars: true 的地点提供）
+const STAR_SERVICE = {
+  title: '免费星空 / 极光拍摄服务',
+  detail: '在住宿当晚前往附近暗空地点，为客人拍摄星空人像与银河照片，南半球极光（Aurora Australis）出现时一并拍摄。',
+  disclaimer: '本服务免费赠送，不作保证：星空与极光能否看到、拍到，取决于当晚天气、云量、月相及太阳活动等自然条件；如遇天气不佳将取消，恕不另行补偿。',
+};
+
 const ROUTES = [
-  { id: 'central', type: 'main', name: '中线', sub: '湖光雪山 · 经典首选', color: '#2f6fde',
+  { id: 'central', type: 'main', stars: true, name: '中线', sub: '湖光雪山 · 经典首选', color: '#2f6fde',
     desc: '穿越麦肯齐盆地的蓝色湖泊，抵达库克山脚，再经瓦纳卡到皇后镇。南岛雪山湖泊精华最集中的一条线。',
-    stops:  ['chc', 'tek', 'mtc', 'wan', 'zqn'],
-    nights: [1, 1, 1, 1, 2],
-    legs:   [180, 75, 165, 60],
-    legNotes: ['', '', '', '经皇冠山公路 Crown Range'] },
-  { id: 'east', type: 'main', name: '东线', sub: '海岸野生动物 · 慢节奏', color: '#e2780e',
+    stops:  ['chc', 'tek', 'mtc', 'twz', 'wan', 'zqn'],
+    nights: [1, 1, 0, 1, 1, 2],
+    legs:   [180, 75, 50, 110, 60],
+    legNotes: ['', '', '白天游览库克山，晚上回特威泽尔住宿看星空', '途经林迪斯山口 Lindis Pass', '经皇冠山公路 Crown Range'] },
+  { id: 'east', type: 'main', stars: true, name: '东线', sub: '海岸野生动物 · 慢节奏', color: '#e2780e',
     desc: '沿太平洋海岸南下：奥马鲁企鹅、摩拉基大圆石、但尼丁信天翁、卡特林斯海岸雨林，经南端因弗卡吉尔到皇后镇。',
     stops:  ['chc', 'oam', 'moe', 'dun', 'cat', 'ivc', 'zqn'],
     nights: [1, 1, 0, 2, 1, 1, 1],
@@ -185,12 +199,12 @@ const ROUTES = [
     nights: [1, 0, 0, 1, 1, 2, 0, 0, 1, 2],
     legs:   [120, 90, 45, 75, 120, 30, 120, 135, 60],
     legNotes: ['途经城堡山', '', '', '', '', '', '', '哈斯特山口，沿途蓝池', '经皇冠山公路'] },
-  { id: 'loop', type: 'main', loop: true, name: '中线+东线', sub: '南岛环线 · 一次看全', color: '#7c3aed',
+  { id: 'loop', type: 'main', stars: true, loop: true, name: '中线+东线', sub: '南岛环线 · 一次看全', color: '#7c3aed',
     desc: '中线与东线连成一个环：内陆走雪山湖泊，海岸看野生动物，起点终点同一城市，免去单程还车 / 回程机票的麻烦。',
-    stops:  ['chc', 'tek', 'mtc', 'wan', 'zqn', 'ivc', 'cat', 'dun', 'moe', 'oam', 'chc'],
-    nights: [1, 1, 1, 1, 2, 1, 1, 2, 0, 1, 0],
-    legs:   [180, 75, 165, 60, 150, 150, 90, 60, 40, 210],
-    legNotes: ['', '', '', '经皇冠山公路 Crown Range', '', '经库里奥湾', '经金块角', '', '', ''] },
+    stops:  ['chc', 'tek', 'mtc', 'twz', 'wan', 'zqn', 'ivc', 'cat', 'dun', 'moe', 'oam', 'chc'],
+    nights: [1, 1, 0, 1, 1, 2, 1, 1, 2, 0, 1, 0],
+    legs:   [180, 75, 50, 110, 60, 150, 150, 90, 60, 40, 210],
+    legNotes: ['', '', '白天游览库克山，晚上回特威泽尔住宿看星空', '途经林迪斯山口 Lindis Pass', '经皇冠山公路 Crown Range', '', '经库里奥湾', '经金块角', '', '', ''] },
   { id: 'milford', type: 'side', fixed: 'zqn', name: '米尔福德峡湾', sub: '皇后镇出发 · 2天1晚', color: '#0891b2',
     desc: '从皇后镇出发，第一天到蒂阿瑙看萤火虫洞并过夜，第二天清早走米尔福德公路进峡湾游船，傍晚返回皇后镇（可选观光飞机飞回）。',
     stops:  ['zqn', 'tea', 'mil', 'zqn'],
