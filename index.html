@@ -77,6 +77,10 @@
   .starbanner h3 { margin: 0 0 4px; font-size: 14px; color: #fff; }
   .starbanner p { margin: 4px 0 0; }
   .starbanner .warn { color: #ffd88a; font-size: 12px; }
+  .nstep { display: inline-flex; align-items: center; gap: 2px; vertical-align: middle; }
+  .nstep button { border: 0; background: color-mix(in srgb, var(--c) 22%, white); color: var(--c); width: 20px; height: 20px; border-radius: 6px; font-weight: 700; cursor: pointer; padding: 0; line-height: 20px; }
+  .nstep button:disabled { opacity: .35; cursor: default; }
+  .nrange { display: block; font-size: 10.5px; color: var(--muted); margin-top: 2px; }
   .leg { display: flex; align-items: center; gap: 10px; padding: 8px 0 8px 12px; margin-left: 12px; border-left: 3px dotted var(--c); cursor: pointer; color: var(--muted); font-size: 13px; }
   .leg:hover .drive { background: var(--c); color: #fff; }
   .leg .drive { background: var(--soft); color: var(--ink); border-radius: 8px; padding: 3px 10px; font-weight: 600; font-variant-numeric: tabular-nums; transition: background .15s; }
@@ -211,7 +215,8 @@ const vprice = v => v.price + (season().peak ? SEASON.peakCarAdd : SEASON.offCar
 const fleetPrice = f => VEHICLES.reduce((s, v) => s + vprice(v) * (f[v.id] || 0), 0);
 const fleetLabel = f => VEHICLES.filter(v => f[v.id]).map(v => `${v.name}${f[v.id] > 1 ? ` × ${f[v.id]} 辆` : ''}`).join(' + ');
 const fleet = () => state.vehicle === 'auto' ? cheapestFleet() : { [state.vehicle]: cars(VEHICLES.find(v => v.id === state.vehicle)) };
-const state = { month: new Date().getMonth() + 1, start: 'chc', route: 'central', people: 2, vehicle: 'auto', days: null, picks: {}, tourIdx: -1, playing: null };
+const nightKey = (r, id) => r.id + ':' + id;
+const state = { nightSel: {}, month: new Date().getMonth() + 1, start: 'chc', route: 'central', people: 2, vehicle: 'auto', days: null, picks: {}, tourIdx: -1, playing: null };
 
 // 按出发城市调整线路方向：单程线路反向，环线换起点；单独行程固定出发城市
 function orient(r) {
@@ -229,6 +234,20 @@ function orient(r) {
     return { ...r, stops: rev(r.stops), nights: rev(r.nights), legs: rev(r.legs), legNotes: rev(r.legNotes) };
   }
   return r;
+}
+// 客人选择的住宿晚数（只对默认要住宿、且在 NIGHT_RANGE 里的地点生效）
+function withNights(r) {
+  return { ...r, nights: r.nights.map((n, i) => {
+    const sel = state.nightSel[nightKey(r, r.stops[i])];
+    return n > 0 && NIGHT_RANGE[r.stops[i]] && sel != null ? sel : n;
+  }) };
+}
+function changeNights(id, d) {
+  const r = active(), [lo, hi] = NIGHT_RANGE[id], i = r.stops.findIndex((s, k) => s === id && r.nights[k] > 0);
+  state.nightSel[nightKey(r, id)] = Math.min(hi, Math.max(lo, r.nights[i] + d));
+  state.days = null;
+  OR = ROUTES.map(x => withNights(orient(x)));
+  const y = $('aside').scrollTop; render(); $('aside').scrollTop = y;
 }
 let OR = [];
 const active = () => OR.find(r => r.id === state.route);
@@ -260,7 +279,7 @@ let activeLayer = L.layerGroup().addTo(map);
 let highlight = null;
 
 function buildLayers() {
-  OR = ROUTES.map(orient);
+  OR = ROUTES.map(r => withNights(orient(r)));
   Object.values(routeLayers).forEach(l => map.removeLayer(l.group));
   OR.forEach(r => {
     const group = L.layerGroup().addTo(map);
@@ -493,7 +512,10 @@ function renderRoute(r) {
     tl += `<div class="stop" data-i="${i}" style="--c:${r.color}">
       <div class="stop-h"><div class="num">${i + 1}</div>
         <div><div class="nm">${p.name}</div><div class="en">${p.en}</div></div>
-        <div class="tag">${n ? `<span class="pill stay">住 ${n} 晚 · ${money(stayRate(id))}/人/晚</span>` : `<span class="pill">${i === 0 ? '出发' : '途经'}</span>`}</div>
+        <div class="tag">${n ? (NIGHT_RANGE[id]
+          ? `<span class="pill stay">住 <span class="nstep"><button data-nid="${id}" data-dn="-1" ${n <= NIGHT_RANGE[id][0] ? 'disabled' : ''}>−</button> ${n} <button data-nid="${id}" data-dn="1" ${n >= NIGHT_RANGE[id][1] ? 'disabled' : ''}>+</button></span> 晚 · ${money(stayRate(id))}/人/晚</span><span class="nrange">可选 ${NIGHT_RANGE[id][0]}–${NIGHT_RANGE[id][1]} 晚</span>`
+          : `<span class="pill stay">住 ${n} 晚 · ${money(stayRate(id))}/人/晚</span>`)
+          : `<span class="pill">${i === 0 ? '出发' : i === r.stops.length - 1 ? '终点' : '途经'}</span>`}</div>
       </div>
       ${repeat ? `<div class="intro">再次回到${p.name}${n ? '过夜' : ''}，活动见第 ${r.stops.indexOf(id) + 1} 站。</div>` : `
       <div class="intro">${p.intro}</div>
@@ -556,6 +578,7 @@ function renderRoute(r) {
   state.quote = {
     '线路': `${r.name} · ${r.sub}`,
     '路线': r.stops.map(id => PLACES[id].name).join(' → '),
+    '住宿安排': r.stops.map((id, i) => r.nights[i] ? `${PLACES[id].name} ${r.nights[i]} 晚` : '').filter(Boolean).join('、'),
     '出行月份': `${state.month} 月（${seasonName()}：${season().why}）`,
     '出行人数': `${state.people} 人`,
     '包车天数': `${days} 天（建议 ${s.days}天${s.nights}晚）`,
@@ -570,7 +593,8 @@ function renderRoute(r) {
   };
 
   bindInquiry();
-  document.querySelectorAll('.stop').forEach(e => e.onclick = ev => { if (ev.target.tagName !== 'INPUT') { stopTour(); state.tourIdx = +e.dataset.i; focusStop(+e.dataset.i); updateTourLbl(); } });
+  document.querySelectorAll('[data-nid]').forEach(b => b.onclick = ev => { ev.stopPropagation(); changeNights(b.dataset.nid, +b.dataset.dn); });
+  document.querySelectorAll('.stop').forEach(e => e.onclick = ev => { if (!['INPUT', 'BUTTON'].includes(ev.target.tagName)) { stopTour(); state.tourIdx = +e.dataset.i; focusStop(+e.dataset.i); updateTourLbl(); } });
   document.querySelectorAll('.leg').forEach(e => e.onclick = () => { stopTour(); focusLeg(+e.dataset.i); });
   document.querySelectorAll('[data-k]').forEach(c => c.onchange = () => { picks[c.dataset.k] = c.checked; const y = $('aside').scrollTop; render(); $('aside').scrollTop = y; });
   bindVehicle();

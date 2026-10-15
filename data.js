@@ -155,7 +155,7 @@ const PLACES = {
       { n: '雨林温泉 Glacier Hot Pools', p: 35, d: '1.5 小时', t: '休闲' },
       { n: '西海岸野生动物中心（看几维鸟）', p: 45, d: '1 小时', t: '野生动物' },
     ] },
-  fox: { name: '福克斯冰川', en: 'Fox Glacier', lat: -43.4640, lng: 170.0170, stay: 0,
+  fox: { name: '福克斯冰川', en: 'Fox Glacier', lat: -43.4640, lng: 170.0170, stay: 120,
     intro: '马瑟森湖倒映库克山与塔斯曼山的"镜湖"。',
     acts: [
       { n: '马瑟森湖环湖 Lake Matheson', p: 0, d: '1.5 小时', t: '打卡' },
@@ -180,6 +180,12 @@ const STAR_SERVICE = {
   disclaimer: '本服务免费赠送，不作保证：星空与极光能否看到、拍到，取决于当晚天气、云量、月相及太阳活动等自然条件；如遇天气不佳将取消，恕不另行补偿。',
 };
 
+// 可住宿地点及可选晚数 [最少, 最多]；线路里 nights 为默认晚数，客人可在范围内调整
+const NIGHT_RANGE = {
+  chc: [1, 3], tek: [1, 2], twz: [1, 2], wan: [1, 2], zqn: [1, 5],
+  dun: [1, 2], oam: [1, 2], fox: [1, 2], gry: [1, 2], kai: [1, 2], aka: [1, 2],
+};
+
 const ROUTES = [
   { id: 'central', type: 'main', stars: true, name: '中线', sub: '湖光雪山 · 经典首选', color: '#2f6fde',
     desc: '穿越麦肯齐盆地的蓝色湖泊，抵达库克山脚，再经瓦纳卡到皇后镇。南岛雪山湖泊精华最集中的一条线。',
@@ -196,7 +202,7 @@ const ROUTES = [
   { id: 'west', type: 'main', name: '西线', sub: '冰川雨林 · 越野风光', color: '#1a9c6b',
     desc: '翻越亚瑟隘口到塔斯曼海岸，一路南下：千层饼岩、绿玉之乡、两大冰川、哈斯特山口，抵达瓦纳卡与皇后镇。',
     stops:  ['chc', 'art', 'gry', 'pun', 'hok', 'fra', 'fox', 'haa', 'wan', 'zqn'],
-    nights: [1, 0, 0, 1, 1, 2, 0, 0, 1, 2],
+    nights: [1, 0, 1, 0, 0, 0, 1, 0, 1, 2],
     legs:   [120, 90, 45, 75, 120, 30, 120, 135, 60],
     legNotes: ['途经城堡山', '', '', '', '', '', '', '哈斯特山口，沿途蓝池', '经皇冠山公路'] },
   { id: 'loop', type: 'main', stars: true, loop: true, name: '中线+东线', sub: '南岛环线 · 一次看全', color: '#7c3aed',
@@ -211,14 +217,14 @@ const ROUTES = [
     nights: [0, 1, 0, 0],
     legs:   [120, 120, 225],
     legNotes: ['', '米尔福德公路，冬季需带防滑链', '可选择观光飞机返回皇后镇'] },
-  { id: 'akaroa', type: 'side', fixed: 'chc', name: '阿卡罗阿', sub: '基督城出发 · 一日游', color: '#db2777',
-    desc: '基督城出发 1.5 小时，翻过班克斯半岛火山口来到法式小镇阿卡罗阿，出海看世界最小的赫氏海豚，当天返回。',
+  { id: 'akaroa', type: 'side', fixed: 'chc', name: '阿卡罗阿', sub: '基督城出发 · 海豚小镇', color: '#db2777',
+    desc: '基督城出发 1.5 小时，翻过班克斯半岛火山口来到法式小镇阿卡罗阿，出海看世界最小的赫氏海豚，在小镇住宿后返回基督城。',
     stops:  ['chc', 'aka', 'chc'],
-    nights: [0, 0, 0],
+    nights: [0, 1, 0],
     legs:   [90, 90],
     legNotes: ['途经 Hilltop 观景点', ''] },
-  { id: 'kaikoura', type: 'side', fixed: 'chc', name: '凯库拉', sub: '基督城出发 · 2天1晚', color: '#a16207',
-    desc: '沿东北海岸 2.5 小时到凯库拉，出海观抹香鲸、与海豚共游、吃海边龙虾，住一晚后原路返回基督城。',
+  { id: 'kaikoura', type: 'side', fixed: 'chc', name: '凯库拉', sub: '基督城出发 · 观鲸胜地', color: '#a16207',
+    desc: '沿东北海岸 2.5 小时到凯库拉，出海观抹香鲸、与海豚共游、吃海边龙虾，住宿后原路返回基督城。',
     stops:  ['chc', 'kai', 'chc'],
     nights: [0, 1, 0],
     legs:   [150, 150],
