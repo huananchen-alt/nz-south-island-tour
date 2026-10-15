@@ -34,6 +34,9 @@
   .seg button { border: 0; background: transparent; border-radius: 8px; padding: 5px 14px; font: inherit; font-weight: 600; color: var(--muted); cursor: pointer; }
   .seg button.on { background: var(--panel); color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,.15); }
   .fixed { font-weight: 600; color: var(--ink); }
+  .seg.ppl { flex-wrap: wrap; }
+  .seg.ppl button { padding: 5px 0; width: 30px; font-variant-numeric: tabular-nums; }
+  .vcard .cnt { display: inline-block; margin-left: 6px; padding: 0 7px; border-radius: 99px; background: var(--ink); color: #fff; font-size: 11px; font-weight: 600; }
 
   section { padding: 16px 20px; border-bottom: 1px solid var(--line); }
   h2 { font-size: 15px; margin: 0 0 10px; }
@@ -82,7 +85,6 @@
   .vcard .vp { margin-left: auto; text-align: right; font-weight: 700; font-size: 16px; white-space: nowrap; }
   .vcard .vp small { display: block; font-weight: 400; font-size: 11px; color: var(--muted); }
   .vcard.on { border-color: var(--ink); box-shadow: 0 0 0 2px rgba(29,35,39,.15); }
-  .vcard.off { opacity: .4; cursor: not-allowed; }
   .row { display: flex; align-items: center; gap: 10px; margin: 0 0 12px; flex-wrap: wrap; }
   .step { display: inline-flex; align-items: center; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
   .step button { border: 0; background: var(--soft); width: 32px; height: 32px; font-size: 18px; cursor: pointer; color: var(--ink); }
@@ -165,6 +167,8 @@ const hm = m => { const h = Math.floor(m / 60), r = m % 60; return h ? `${h} 小
 const hmShort = m => { const h = Math.floor(m / 60), r = m % 60; return h ? `${h}h${r ? String(r).padStart(2, '0') : ''}` : `${r}min`; };
 const geo = (a, b) => GEO[[a, b].sort().join('-')];
 
+const MAX_PEOPLE = 10;
+const cars = v => Math.ceil(state.people / v.pax);   // 人数超过车型载客量时自动按多辆车计算
 const state = { start: 'chc', route: 'central', people: 2, vehicle: 'benz-suv', days: null, picks: {}, tourIdx: -1, playing: null };
 
 // 按出发城市调整线路方向：单程线路反向，环线换起点；单独行程固定出发城市
@@ -320,8 +324,10 @@ function renderTabs() {
     : `出发城市 <span class="seg">${['chc', 'zqn'].map(c => `<button class="${state.start === c ? 'on' : ''}" data-start="${c}">${PLACES[c].name}</button>`).join('')}</span>`;
   $('#tabs').innerHTML = `<div class="glabel">经典线路</div>${ROUTES.filter(r => r.type === 'main').map(tab).join('')}
     <div class="glabel">单独行程</div>${ROUTES.filter(r => r.type === 'side').map(tab).join('')}${tab({ id: 'all', name: '全览', sub: '线路对比', color: '#1d2327' })}
-    <div class="start">${startHtml}</div>`;
+    <div class="start">${startHtml}</div>
+    <div class="start">出行人数 <span class="seg ppl">${Array.from({ length: MAX_PEOPLE }, (_, i) => i + 1).map(n => `<button class="${state.people === n ? 'on' : ''}" data-ppl="${n}">${n}</button>`).join('')}</span></div>`;
   $('#tabs').querySelectorAll('.tab').forEach(b => b.onclick = () => setRoute(b.dataset.id));
+  $('#tabs').querySelectorAll('[data-ppl]').forEach(b => b.onclick = () => setPeople(+b.dataset.ppl));
   $('#tabs').querySelectorAll('[data-start]').forEach(b => b.onclick = () => {
     if (state.start === b.dataset.start) return;
     state.start = b.dataset.start; buildLayers(); setRoute(state.route);
@@ -336,31 +342,33 @@ function vehicleHtml(days) {
       ${state.route !== 'all' ? `包车天数 <span class="step"><button data-day="-1">−</button><span>${days} 天</span><button data-day="1">+</button></span>` : ''}
     </div>
     <div class="veh">${VEHICLES.map(v => {
-      const off = v.pax < state.people;
-      return `<div class="vcard ${state.vehicle === v.id ? 'on' : ''} ${off ? 'off' : ''}" data-v="${v.id}">
+      const n = cars(v);
+      return `<div class="vcard ${state.vehicle === v.id ? 'on' : ''}" data-v="${v.id}">
         <div class="ico">${v.img}</div>
-        <div><div class="vn">${v.name}</div><div class="vd">${v.note}${off ? ' · 人数超出' : ''}</div></div>
-        <div class="vp">${money(v.price)}<small>每天</small></div></div>`;
+        <div><div class="vn">${v.name}${n > 1 ? `<span class="cnt">需 ${n} 辆</span>` : ''}</div><div class="vd">${v.note}</div></div>
+        <div class="vp">${money(v.price * n)}<small>${n > 1 ? `${money(v.price)} × ${n} 辆 / 天` : '每天'}</small></div></div>`;
     }).join('')}</div>
   </section>`;
 }
 
 function bindVehicle() {
   document.querySelectorAll('[data-d]').forEach(b => b.onclick = () => {
-    state.people = Math.min(5, Math.max(1, state.people + +b.dataset.d));
-    const cur = VEHICLES.find(v => v.id === state.vehicle);
-    if (cur.pax < state.people) state.vehicle = VEHICLES.find(v => v.pax >= state.people).id;
-    render();
+    setPeople(state.people + +b.dataset.d);
   });
   document.querySelectorAll('[data-day]').forEach(b => b.onclick = () => {
     const r = active();
     state.days = Math.max(1, (state.days ?? routeStats(r).days) + +b.dataset.day);
     render();
   });
-  document.querySelectorAll('.vcard').forEach(c => c.onclick = () => {
-    if (c.classList.contains('off')) return;
-    state.vehicle = c.dataset.v; render();
-  });
+  document.querySelectorAll('.vcard').forEach(c => c.onclick = () => { state.vehicle = c.dataset.v; render(); });
+}
+
+// 改人数：当前车型坐不下时，自动换成每天总价最低的车型组合
+function setPeople(n) {
+  state.people = Math.min(MAX_PEOPLE, Math.max(1, n));
+  const cur = VEHICLES.find(v => v.id === state.vehicle);
+  if (cur.pax < state.people) state.vehicle = VEHICLES.reduce((a, b) => b.price * cars(b) < a.price * cars(a) ? b : a).id;
+  const y = $('aside').scrollTop; render(); $('aside').scrollTop = y;
 }
 
 function renderRoute(r) {
@@ -397,7 +405,7 @@ function renderRoute(r) {
   const actPP = Object.keys(picks).filter(k => picks[k]).reduce((sum, k) => {
     const [id, idx] = k.split(':'); return sum + PLACES[id].acts[idx].p;
   }, 0);
-  const car = v.price * days, stay = s.stay * state.people, act = actPP * state.people;
+  const car = v.price * cars(v) * days, stay = s.stay * state.people, act = actPP * state.people;
   const total = car + stay + act;
 
   const starStops = r.stops.filter((id, i, a) => a.indexOf(id) === i && hasStars(r, id));
@@ -423,7 +431,7 @@ function renderRoute(r) {
     ${vehicleHtml(days)}
     <section style="border-bottom:0">
       <div class="quote">
-        <div class="ln"><span>包车 ${v.name} × ${days} 天</span><span>${money(car)}</span></div>
+        <div class="ln"><span>包车 ${v.name}${cars(v) > 1 ? ` × ${cars(v)} 辆` : ''} × ${days} 天</span><span>${money(car)}</span></div>
         <div class="ln"><span>住宿 ${s.nights} 晚 × ${state.people} 人</span><span>${money(stay)}</span></div>
         <div class="ln"><span>已选活动 ${money(actPP)}/人 × ${state.people} 人</span><span>${money(act)}</span></div>
         ${starNights ? `<div class="ln"><span>✨ 星空/极光拍摄（最多 ${starNights} 晚，视天气）</span><span>免费</span></div>` : ''}
@@ -445,7 +453,7 @@ function renderAll() {
     const s = routeStats(r);
     return `<tr><td><span class="dot" style="background:${r.color}"></span><b>${r.name}</b></td>
       <td>${s.days}天</td><td>${s.km.toLocaleString()}</td><td>${Math.round(s.drive / 6) / 10}h</td><td>${money(s.stay)}</td>
-      <td>${money(v.price * s.days + s.stay * state.people)}</td></tr>`;
+      <td>${money(v.price * cars(v) * s.days + s.stay * state.people)}</td></tr>`;
   }).join('');
   const head = `<thead><tr><th>线路</th><th>天数</th><th>里程 km</th><th>驾车</th><th>住宿/人</th><th>包车+住宿*</th></tr></thead>`;
   const list = type => OR.filter(r => r.type === type).map(r => `<p style="margin:0 0 10px"><span class="dot" style="background:${r.color}"></span><b>${r.name} · ${r.sub}</b><br><span class="desc">${r.stops.map(id => PLACES[id].name).join(' → ')}</span></p>`).join('');
@@ -458,7 +466,7 @@ function renderAll() {
     <section>
       <h2>单独行程（可加在任意线路前后）</h2>
       <table class="cmp">${head}<tbody>${rows('side')}</tbody></table>
-      <p class="fine">* 按当前选择：${state.people} 人，${v.name}（${money(v.price)}/天），不含活动。</p>
+      <p class="fine">* 按当前选择：${state.people} 人，${v.name}${cars(v) > 1 ? ` × ${cars(v)} 辆` : ''}（${money(v.price * cars(v))}/天），不含活动。</p>
     </section>
     <section>
       <h2>途经地一览</h2>
