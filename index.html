@@ -181,8 +181,8 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<script src="data.js?v=202610152348"></script>
-<script src="geo.js?v=202610152348"></script>
+<script src="data.js?v=202610152350"></script>
+<script src="geo.js?v=202610152350"></script>
 <script>
 const $ = s => document.querySelector(s);
 const money = n => '$' + Math.round(n).toLocaleString('en-US');
@@ -216,6 +216,7 @@ const stayRate = id => Math.round(PLACES[id].stay * (season().peak ? 1 : SEASON.
 const vprice = v => v.price + (season().peak ? SEASON.peakCarAdd : SEASON.offCarAdd);
 // 空驶段：起点或终点不是司导常驻城市时，各需空驶一段
 const deadheadLegs = r => {
+  if (r.noDeadhead) return [];
   const base = PLACES[DEADHEAD.base].name, start = r.stops[0], end = r.stops[r.stops.length - 1], legs = [];
   if (start !== DEADHEAD.base) legs.push(`${base} → ${PLACES[start].name}（空驶去起点）`);
   if (end !== DEADHEAD.base) legs.push(`${PLACES[end].name} → ${base}（空驶回${base}）`);
@@ -607,7 +608,7 @@ function renderRoute(r) {
     '包车车辆': `${fleetLabel(fl)}（${money(fleetPrice(fl))}/天）`,
     '已选活动': actList.length ? actList.join('\n') : '未选择',
     '包车费': money(car),
-    '空驶费': dh ? `${money(dh)}（${dhLegs.join('；')}，${fleetCount(fl)} 辆车）` : '无（基督城出发并返回）',
+    '空驶费': dh ? `${money(dh)}（${dhLegs.join('；')}，${fleetCount(fl)} 辆车）` : (r.noDeadhead ? '无（接在皇后镇行程之后）' : '无（基督城出发并返回）'),
     '住宿费': `${money(stay)}（${s.nights} 晚 × ${state.people} 人）`,
     '活动费': `${money(act)}（${money(actPP)}/人）`,
     '合计 (NZD)': money(total),
