@@ -181,8 +181,8 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<script src="data.js?v=202610152340"></script>
-<script src="geo.js?v=202610152340"></script>
+<script src="data.js?v=202610152348"></script>
+<script src="geo.js?v=202610152348"></script>
 <script>
 const $ = s => document.querySelector(s);
 const money = n => '$' + Math.round(n).toLocaleString('en-US');
@@ -214,6 +214,15 @@ const season = () => SEASON.months[state.month];
 const seasonName = () => season().peak ? '旺季' : '淡季';
 const stayRate = id => Math.round(PLACES[id].stay * (season().peak ? 1 : SEASON.offStayFactor));
 const vprice = v => v.price + (season().peak ? SEASON.peakCarAdd : SEASON.offCarAdd);
+// 空驶段：起点或终点不是司导常驻城市时，各需空驶一段
+const deadheadLegs = r => {
+  const base = PLACES[DEADHEAD.base].name, start = r.stops[0], end = r.stops[r.stops.length - 1], legs = [];
+  if (start !== DEADHEAD.base) legs.push(`${base} → ${PLACES[start].name}（空驶去起点）`);
+  if (end !== DEADHEAD.base) legs.push(`${PLACES[end].name} → ${base}（空驶回${base}）`);
+  return legs;
+};
+const fleetCount = f => Object.values(f).reduce((a, b) => a + b, 0);
+const deadheadFee = (r, f) => deadheadLegs(r).length * fleetCount(f) * DEADHEAD.fee;
 const fleetPrice = f => VEHICLES.reduce((s, v) => s + vprice(v) * (f[v.id] || 0), 0);
 const fleetLabel = f => VEHICLES.filter(v => f[v.id]).map(v => `${v.name}${f[v.id] > 1 ? ` × ${f[v.id]} 辆` : ''}`).join(' + ');
 const fleet = () => state.vehicle === 'auto' ? cheapestFleet() : { [state.vehicle]: cars(VEHICLES.find(v => v.id === state.vehicle)) };
@@ -548,7 +557,8 @@ function renderRoute(r) {
     const [id, idx] = k.split(':'); return sum + PLACES[id].acts[idx].p;
   }, 0);
   const fl = fleet(), car = fleetPrice(fl) * days, stay = s.stay * state.people, act = actPP * state.people;
-  const total = car + stay + act;
+  const dhLegs = deadheadLegs(r), dh = deadheadFee(r, fl);
+  const total = car + dh + stay + act;
 
   const starStops = r.stops.filter((id, i, a) => a.indexOf(id) === i && hasStars(r, id));
   const starNights = r.stops.reduce((n, id, i) => n + (hasStars(r, id) ? r.nights[i] : 0), 0);
@@ -574,6 +584,7 @@ function renderRoute(r) {
     <section style="border-bottom:0">
       <div class="quote">
         <div class="ln"><span>包车 ${fleetLabel(fl)} × ${days} 天</span><span>${money(car)}</span></div>
+        ${dh ? `<div class="ln"><span>司导及车辆空驶费 ${dhLegs.length} 段 × ${fleetCount(fl)} 辆 × ${money(DEADHEAD.fee)}<br><small>${dhLegs.join('；')}</small></span><span>${money(dh)}</span></div>` : ''}
         <div class="ln"><span>住宿 ${s.nights} 晚 × ${state.people} 人</span><span>${money(stay)}</span></div>
         <div class="ln"><span>已选活动 ${money(actPP)}/人 × ${state.people} 人</span><span>${money(act)}</span></div>
         ${starNights ? `<div class="ln"><span>✨ 星空/极光拍摄（最多 ${starNights} 晚，视天气）</span><span>免费</span></div>` : ''}
@@ -596,6 +607,7 @@ function renderRoute(r) {
     '包车车辆': `${fleetLabel(fl)}（${money(fleetPrice(fl))}/天）`,
     '已选活动': actList.length ? actList.join('\n') : '未选择',
     '包车费': money(car),
+    '空驶费': dh ? `${money(dh)}（${dhLegs.join('；')}，${fleetCount(fl)} 辆车）` : '无（基督城出发并返回）',
     '住宿费': `${money(stay)}（${s.nights} 晚 × ${state.people} 人）`,
     '活动费': `${money(act)}（${money(actPP)}/人）`,
     '合计 (NZD)': money(total),
@@ -616,9 +628,9 @@ function renderAll() {
     const s = routeStats(r);
     return `<tr><td><span class="dot" style="background:${r.color}"></span><b>${r.name}</b></td>
       <td>${s.days}天</td><td>${s.km.toLocaleString()}</td><td>${Math.round(s.drive / 6) / 10}h</td><td>${money(s.stay)}</td>
-      <td>${money(fleetPrice(fleet()) * s.days + s.stay * state.people)}</td></tr>`;
+      <td>${money(fleetPrice(fleet()) * s.days + deadheadFee(r, fleet()) + s.stay * state.people)}</td></tr>`;
   }).join('');
-  const head = `<thead><tr><th>线路</th><th>天数</th><th>里程 km</th><th>驾车</th><th>住宿/人</th><th>包车+住宿*</th></tr></thead>`;
+  const head = `<thead><tr><th>线路</th><th>天数</th><th>里程 km</th><th>驾车</th><th>住宿/人</th><th>包车+空驶+住宿*</th></tr></thead>`;
   const list = type => OR.filter(r => r.type === type).map(r => `<p style="margin:0 0 10px"><span class="dot" style="background:${r.color}"></span><b>${r.name} · ${r.sub}</b><br><span class="desc">${r.stops.map(id => PLACES[id].name).join(' → ')}</span></p>`).join('');
   $('#content').innerHTML = `
     <section>
