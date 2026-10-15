@@ -179,8 +179,8 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<script src="data.js?v=202610152334"></script>
-<script src="geo.js?v=202610152334"></script>
+<script src="data.js?v=202610152336"></script>
+<script src="geo.js?v=202610152336"></script>
 <script>
 const $ = s => document.querySelector(s);
 const money = n => '$' + Math.round(n).toLocaleString('en-US');
@@ -237,13 +237,13 @@ function orient(r) {
 }
 // 客人选择的住宿晚数（只对默认要住宿、且在 NIGHT_RANGE 里的地点生效）
 function withNights(r) {
-  return { ...r, nights: r.nights.map((n, i) => {
+  return { ...r, baseNights: r.nights, nights: r.nights.map((n, i) => {
     const sel = state.nightSel[nightKey(r, r.stops[i])];
     return n > 0 && NIGHT_RANGE[r.stops[i]] && sel != null ? sel : n;
   }) };
 }
 function changeNights(id, d) {
-  const r = active(), [lo, hi] = NIGHT_RANGE[id], i = r.stops.findIndex((s, k) => s === id && r.nights[k] > 0);
+  const r = active(), [lo, hi] = NIGHT_RANGE[id], i = r.stops.findIndex((s, k) => s === id && r.baseNights[k] > 0);
   state.nightSel[nightKey(r, id)] = Math.min(hi, Math.max(lo, r.nights[i] + d));
   state.days = null;
   OR = ROUTES.map(x => withNights(orient(x)));
@@ -512,9 +512,10 @@ function renderRoute(r) {
     tl += `<div class="stop" data-i="${i}" style="--c:${r.color}">
       <div class="stop-h"><div class="num">${i + 1}</div>
         <div><div class="nm">${p.name}</div><div class="en">${p.en}</div></div>
-        <div class="tag">${n ? (NIGHT_RANGE[id]
-          ? `<span class="pill stay">住 <span class="nstep"><button data-nid="${id}" data-dn="-1" ${n <= NIGHT_RANGE[id][0] ? 'disabled' : ''}>−</button> ${n} <button data-nid="${id}" data-dn="1" ${n >= NIGHT_RANGE[id][1] ? 'disabled' : ''}>+</button></span> 晚 · ${money(stayRate(id))}/人/晚</span><span class="nrange">可选 ${NIGHT_RANGE[id][0]}–${NIGHT_RANGE[id][1]} 晚</span>`
-          : `<span class="pill stay">住 ${n} 晚 · ${money(stayRate(id))}/人/晚</span>`)
+        <div class="tag">${r.baseNights[i] && NIGHT_RANGE[id] ? (n === 0
+          ? `<span class="pill">不住 <span class="nstep"><button data-nid="${id}" data-dn="1">+</button></span></span><span class="nrange">可选 ${NIGHT_RANGE[id][0]}–${NIGHT_RANGE[id][1]} 晚，0 = 当天往返</span>`
+          : `<span class="pill stay">住 <span class="nstep"><button data-nid="${id}" data-dn="-1" ${n <= NIGHT_RANGE[id][0] ? 'disabled' : ''}>−</button> ${n} <button data-nid="${id}" data-dn="1" ${n >= NIGHT_RANGE[id][1] ? 'disabled' : ''}>+</button></span> 晚 · ${money(stayRate(id))}/人/晚</span><span class="nrange">可选 ${NIGHT_RANGE[id][0]}–${NIGHT_RANGE[id][1]} 晚</span>`
+) : n ? `<span class="pill stay">住 ${n} 晚 · ${money(stayRate(id))}/人/晚</span>`
           : `<span class="pill">${i === 0 ? '出发' : i === r.stops.length - 1 ? '终点' : '途经'}</span>`}</div>
       </div>
       ${repeat ? `<div class="intro">再次回到${p.name}${n ? '过夜' : ''}，活动见第 ${r.stops.indexOf(id) + 1} 站。</div>` : `

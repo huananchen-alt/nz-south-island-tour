@@ -184,6 +184,7 @@ const STAR_SERVICE = {
 const NIGHT_RANGE = {
   chc: [1, 3], tek: [1, 2], twz: [1, 2], wan: [1, 2], zqn: [1, 5],
   dun: [1, 2], oam: [1, 2], fox: [1, 2], gry: [1, 2], kai: [1, 2], aka: [1, 2],
+  tea: [0, 1],   // 0 = 不住，米尔福德当天往返皇后镇
 };
 
 const ROUTES = [
@@ -211,8 +212,8 @@ const ROUTES = [
     nights: [1, 1, 0, 1, 1, 2, 2, 1, 0],
     legs:   [180, 75, 50, 110, 60, 225, 100, 210],
     legNotes: ['', '', '白天游览库克山，晚上回特威泽尔住宿看星空', '途经林迪斯山口 Lindis Pass', '经皇冠山公路 Crown Range', '穿越中奥塔哥 Central Otago', '', ''] },
-  { id: 'milford', type: 'side', fixed: 'zqn', name: '米尔福德峡湾', sub: '皇后镇出发 · 2天1晚', color: '#0891b2',
-    desc: '从皇后镇出发，第一天到蒂阿瑙看萤火虫洞并过夜，第二天清早走米尔福德公路进峡湾游船，傍晚返回皇后镇（可选观光飞机飞回）。',
+  { id: 'milford', type: 'side', fixed: 'zqn', name: '米尔福德峡湾', sub: '皇后镇出发 · 峡湾游船', color: '#0891b2',
+    desc: '从皇后镇出发，可选在蒂阿瑙住一晚（看萤火虫洞，第二天清早进峡湾），也可不住、当天往返；走米尔福德公路进峡湾游船，傍晚返回皇后镇（可选观光飞机飞回）。',
     stops:  ['zqn', 'tea', 'mil', 'zqn'],
     nights: [0, 1, 0, 0],
     legs:   [120, 120, 225],
