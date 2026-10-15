@@ -96,6 +96,18 @@
   .quote .tot span:first-child { color: var(--ink); }
   .fine { font-size: 11px; color: var(--muted); margin: 10px 0 0; }
 
+  .inquiry { margin-top: 16px; border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
+  .inquiry h2 { margin-bottom: 4px; }
+  .inquiry form { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+  .inquiry label { display: grid; gap: 3px; font-size: 12px; color: var(--muted); }
+  .inquiry label.full { grid-column: 1 / -1; }
+  .inquiry input, .inquiry textarea { font: inherit; color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; width: 100%; }
+  .inquiry textarea { min-height: 64px; resize: vertical; }
+  .inquiry button[type=submit] { grid-column: 1 / -1; border: 0; border-radius: 10px; padding: 11px; font: inherit; font-weight: 700; background: var(--c, var(--ink)); color: #fff; cursor: pointer; }
+  .inquiry button[disabled] { opacity: .6; cursor: wait; }
+  .qmsg { grid-column: 1 / -1; font-size: 13px; }
+  .qmsg.ok { color: var(--ok); font-weight: 600; }
+  .qmsg.err { color: var(--warn); }
   table.cmp { width: 100%; border-collapse: collapse; font-size: 13px; }
   table.cmp th, table.cmp td { padding: 7px 6px; border-bottom: 1px solid var(--line); text-align: right; font-variant-numeric: tabular-nums; }
   table.cmp th:first-child, table.cmp td:first-child { text-align: left; }
@@ -395,6 +407,68 @@ function setPeople(n) {
   const y = $('aside').scrollTop; render(); $('aside').scrollTop = y;
 }
 
+/* ---------- 报价咨询表单 ---------- */
+const FORM_FIELDS = [
+  { k: 'name', label: '您的姓名 *', required: true },
+  { k: 'contact', label: '微信号 / 电话 *', required: true },
+  { k: 'email', label: '邮箱（选填）', type: 'email' },
+  { k: 'date', label: '计划出发日期', type: 'date' },
+  { k: 'note', label: '其他需求（选填）', area: true },
+];
+state.form = {};
+
+function inquiryHtml(r) {
+  const esc = v => String(v || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+  return `<div class="inquiry" style="--c:${r.color}">
+    <h2>📩 提交报价咨询</h2>
+    <p class="fine" style="margin:0">留下联系方式，我们会根据您以上的线路、人数、车型和活动选择，尽快联系您确认行程和最终报价。</p>
+    <form id="qform" novalidate>
+      ${FORM_FIELDS.map(f => `<label class="${f.area ? 'full' : ''}">${f.label}${f.area
+        ? `<textarea name="${f.k}">${esc(state.form[f.k])}</textarea>`
+        : `<input name="${f.k}" type="${f.type || 'text'}" value="${esc(state.form[f.k])}" ${f.required ? 'required' : ''}>`}</label>`).join('')}
+      <input type="checkbox" name="botcheck" style="display:none" tabindex="-1" autocomplete="off">
+      <button type="submit">提交报价咨询</button>
+      <div class="qmsg" id="qmsg"></div>
+    </form>
+  </div>`;
+}
+
+function bindInquiry() {
+  const form = $('#qform');
+  if (!form) return;
+  form.oninput = e => { if (FORM_FIELDS.some(f => f.k === e.target.name)) state.form[e.target.name] = e.target.value; };
+  form.onsubmit = async e => {
+    e.preventDefault();
+    const msg = $('#qmsg'), btn = form.querySelector('button[type=submit]');
+    const f = state.form;
+    if (!(f.name || '').trim() || !(f.contact || '').trim()) { msg.className = 'qmsg err'; msg.textContent = '请填写姓名和微信号 / 电话。'; return; }
+    if (!QUOTE_FORM.accessKey) { msg.className = 'qmsg err'; msg.textContent = '报价系统尚未配置，请直接联系我们。'; return; }
+    btn.disabled = true; btn.textContent = '提交中…'; msg.textContent = '';
+    try {
+      const body = {
+        access_key: QUOTE_FORM.accessKey,
+        subject: `${QUOTE_FORM.subject}｜${f.name}｜${state.quote['线路']}｜${state.quote['出行人数']}`,
+        from_name: '南岛包车报价页面',
+        botcheck: form.botcheck.checked,
+        '客人姓名': f.name, '微信/电话': f.contact, '客人邮箱': f.email || '未填写', '计划出发日期': f.date || '未填写', '其他需求': f.note || '无',
+        ...state.quote,
+      };
+      if (f.email) body.replyto = f.email;
+      const res = await fetch('https://api.web3forms.com/submit', {
+        method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(body),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success) throw new Error(data.message || res.status);
+      msg.className = 'qmsg ok'; msg.textContent = '✅ 已收到您的报价咨询，我们会尽快与您联系！';
+      state.form = {}; FORM_FIELDS.forEach(x => { form[x.k].value = ''; });
+    } catch (err) {
+      msg.className = 'qmsg err'; msg.textContent = '提交失败，请稍后重试或直接联系我们。（' + err.message + '）';
+    } finally {
+      btn.disabled = false; btn.textContent = '提交报价咨询';
+    }
+  };
+}
+
 function renderRoute(r) {
   const s = routeStats(r);
   const days = state.days ?? s.days;
@@ -462,8 +536,27 @@ function renderRoute(r) {
         <div class="ln"><span>人均</span><span>${money(total / state.people)}</span></div>
       </div>
       <p class="fine">* 所有价格为新西兰元 (NZD) 旺季参考价，住宿按两人一间均摊；活动价格以各运营商官网为准；餐饮、机票、保险未计入。${starNights ? '星空/极光拍摄为免费赠送服务，不作保证，视天气状况而定。' : ''}</p>
+      ${inquiryHtml(r)}
     </section>`;
 
+  // 记下当前报价，供提交表单时发送
+  const actList = Object.keys(picks).filter(k => picks[k]).map(k => { const [id, idx] = k.split(':'); const a = PLACES[id].acts[idx]; return `${PLACES[id].name}｜${a.n}｜${a.p ? money(a.p) + '/人' : '免费'}`; });
+  state.quote = {
+    '线路': `${r.name} · ${r.sub}`,
+    '路线': r.stops.map(id => PLACES[id].name).join(' → '),
+    '出行人数': `${state.people} 人`,
+    '包车天数': `${days} 天（建议 ${s.days}天${s.nights}晚）`,
+    '包车车辆': `${fleetLabel(fl)}（${money(fleetPrice(fl))}/天）`,
+    '已选活动': actList.length ? actList.join('\n') : '未选择',
+    '包车费': money(car),
+    '住宿费': `${money(stay)}（${s.nights} 晚 × ${state.people} 人）`,
+    '活动费': `${money(act)}（${money(actPP)}/人）`,
+    '合计 (NZD)': money(total),
+    '人均 (NZD)': money(total / state.people),
+    '星空/极光拍摄': starStops.length ? `免费（${starStops.map(id => PLACES[id].name).join('、')}），视天气不保证` : '无',
+  };
+
+  bindInquiry();
   document.querySelectorAll('.stop').forEach(e => e.onclick = ev => { if (ev.target.tagName !== 'INPUT') { stopTour(); state.tourIdx = +e.dataset.i; focusStop(+e.dataset.i); updateTourLbl(); } });
   document.querySelectorAll('.leg').forEach(e => e.onclick = () => { stopTour(); focusLeg(+e.dataset.i); });
   document.querySelectorAll('[data-k]').forEach(c => c.onchange = () => { picks[c.dataset.k] = c.checked; const y = $('aside').scrollTop; render(); $('aside').scrollTop = y; });

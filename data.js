@@ -231,3 +231,10 @@ const VEHICLES = [
   { id: 'rav4', name: '丰田 RAV4', pax: 2, bags: 2, price: 700, img: '🚗', note: '2 人 + 2 个 28 寸托运行李' },
   { id: 'v-class', name: '奔驰 V 级商务车', pax: 5, bags: 5, price: 1000, img: '🚐', note: '5 人 + 5 个 28 寸托运行李' },
 ];
+
+// 报价咨询表单：客人提交后通过 Web3Forms 发邮件给我们
+// accessKey 在 https://web3forms.com 用收件邮箱免费获取（Access Key 本身可公开，不会暴露邮箱地址）
+const QUOTE_FORM = {
+  accessKey: '',
+  subject: '新西兰南岛包车报价咨询',
+};
