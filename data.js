@@ -247,6 +247,8 @@ const QUOTE_FORM = {
   subject: '新西兰南岛包车报价咨询',
   // 提交失败时的备用邮箱（拆开写，减少被爬虫抓取）
   fallbackEmail: ['goldeneast88', 'gmail.com'],
+  // Web3Forms 免费版共用的 hCaptcha sitekey（需在 Web3Forms 后台把该表单的验证码设为 hCaptcha）
+  hcaptchaSitekey: '50b2fe65-b00b-4b9e-ad62-3ba471098be2',
 };
 
 // 淡旺季（按出行月份）。旺季：春节、圣诞节、十一黄金周、中国暑假、澳新学校假期

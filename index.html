@@ -119,6 +119,13 @@
   .qmsg { grid-column: 1 / -1; font-size: 13px; }
   .qmsg.ok { color: var(--ok); font-weight: 600; }
   .qmsg.err { color: var(--warn); }
+  .captcha { position: fixed; inset: 0; z-index: 3000; background: rgba(0,0,0,.45); display: grid; place-items: center; padding: 16px; }
+  .captcha[hidden] { display: none; }
+  .captcha .box { background: var(--panel); border-radius: 14px; padding: 18px; max-width: 360px; width: 100%; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,.3); }
+  .captcha h3 { margin: 0 0 4px; font-size: 16px; }
+  .captcha p { margin: 0 0 12px; font-size: 13px; color: var(--muted); }
+  .captcha #hcap { display: flex; justify-content: center; min-height: 78px; }
+  .captcha button { margin-top: 12px; border: 0; background: var(--soft); border-radius: 10px; padding: 8px 18px; font: inherit; cursor: pointer; }
   .wxtip { grid-column: 1 / -1; font-size: 12px; background: #fff7e6; color: #8a5a00; border-radius: 8px; padding: 8px 10px; }
   .fallback { grid-column: 1 / -1; display: grid; gap: 8px; }
   .fallback .btns { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -176,6 +183,12 @@
   </aside>
   <div class="mapwrap">
     <div id="map"></div>
+    <div class="captcha" id="captcha" hidden><div class="box">
+      <h3>🔒 请完成人机验证</h3>
+      <p>为防止垃圾信息，提交前请勾选下方验证，完成后会自动提交。</p>
+      <div id="hcap"></div>
+      <button type="button" id="capCancel">取消</button>
+    </div></div>
     <div class="tour" id="tour">
       <button id="prev" title="上一站">◀</button>
       <button id="play" class="play">▶ 讲解</button>
@@ -186,8 +199,9 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<script src="data.js?v=202610160851"></script>
-<script src="geo.js?v=202610160851"></script>
+<script src="https://js.hcaptcha.com/1/api.js?render=explicit&hl=zh-CN" async defer></script>
+<script src="data.js?v=202610160906"></script>
+<script src="geo.js?v=202610160906"></script>
 <script>
 const $ = s => document.querySelector(s);
 const money = n => '$' + Math.round(n).toLocaleString('en-US');
@@ -514,6 +528,22 @@ function showFallback(f) {
   };
 }
 
+// 人机验证（hCaptcha）：弹窗放在表单外面，不会因为页面重新渲染而消失；验证通过后返回 token
+let capWidget = null;
+function getCaptchaToken() {
+  return new Promise((resolve, reject) => {
+    if (!window.hcaptcha) return reject(new Error('人机验证加载失败，请检查网络后重试'));
+    const box = $('#captcha');
+    box.hidden = false;
+    const done = token => { box.hidden = true; resolve(token); };
+    $('#capCancel').onclick = () => { box.hidden = true; reject(new Error('已取消人机验证')); };
+    if (capWidget === null) capWidget = hcaptcha.render('hcap', { sitekey: QUOTE_FORM.hcaptchaSitekey, callback: t => capDone(t) });
+    else hcaptcha.reset(capWidget);
+    window.capDone = done;
+  });
+}
+const capDone = t => window.capDone && window.capDone(t);
+
 function bindInquiry() {
   const form = $('#qform');
   if (!form) return;
@@ -526,7 +556,11 @@ function bindInquiry() {
     if (!QUOTE_FORM.accessKey) { msg.className = 'qmsg err'; msg.textContent = '报价系统尚未配置，请直接联系我们。'; return; }
     btn.disabled = true; btn.textContent = '提交中…'; msg.textContent = ''; $('#qfallback').hidden = true;
     try {
+      btn.textContent = '等待人机验证…';
+      const token = await getCaptchaToken();
+      btn.textContent = '提交中…';
       const body = {
+        'h-captcha-response': token,
         access_key: QUOTE_FORM.accessKey,
         subject: `${QUOTE_FORM.subject}｜${f.name}｜${state.quote['线路']}｜${state.month}月｜${state.quote['出行人数']}`,
         from_name: '南岛包车报价页面',
@@ -543,6 +577,7 @@ function bindInquiry() {
       msg.className = 'qmsg ok'; msg.textContent = '✅ 已收到您的报价咨询，我们会尽快与您联系！';
       state.form = {}; FORM_FIELDS.forEach(x => { form[x.k].value = ''; });
     } catch (err) {
+      if (err.message === '已取消人机验证') { msg.className = 'qmsg'; msg.textContent = '已取消提交。'; return; }
       msg.className = 'qmsg err';
       msg.textContent = '提交没有成功（' + err.message + '）。微信内置浏览器有时会被拦截，您可以：① 点右上角「···」选「在浏览器中打开」后重试；② 用下面的方式把报价内容发给我们。';
       showFallback(f);
