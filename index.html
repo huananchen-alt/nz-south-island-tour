@@ -179,8 +179,8 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<script src="data.js?v=202610152336"></script>
-<script src="geo.js?v=202610152336"></script>
+<script src="data.js?v=202610152337"></script>
+<script src="geo.js?v=202610152337"></script>
 <script>
 const $ = s => document.querySelector(s);
 const money = n => '$' + Math.round(n).toLocaleString('en-US');
@@ -251,7 +251,8 @@ function changeNights(id, d) {
 }
 let OR = [];
 const active = () => OR.find(r => r.id === state.route);
-const hasStars = (r, id) => !!(r && r.stars && PLACES[id].stars);
+// 星空拍摄在住宿当晚进行，选择不住的地点不提供
+const hasStars = (r, id) => !!(r && r.stars && PLACES[id].stars && r.stops.some((s, i) => s === id && r.nights[i] > 0));
 const fromTo = r => r.stops[0] === r.stops[r.stops.length - 1]
   ? `${PLACES[r.stops[0]].name}出发 · ${r.loop ? '环线' : '往返'}返回${PLACES[r.stops[0]].name}`
   : `${PLACES[r.stops[0]].name} → ${PLACES[r.stops[r.stops.length - 1]].name}`;
@@ -513,7 +514,7 @@ function renderRoute(r) {
       <div class="stop-h"><div class="num">${i + 1}</div>
         <div><div class="nm">${p.name}</div><div class="en">${p.en}</div></div>
         <div class="tag">${r.baseNights[i] && NIGHT_RANGE[id] ? (n === 0
-          ? `<span class="pill">不住 <span class="nstep"><button data-nid="${id}" data-dn="1">+</button></span></span><span class="nrange">可选 ${NIGHT_RANGE[id][0]}–${NIGHT_RANGE[id][1]} 晚，0 = 当天往返</span>`
+          ? `<span class="pill">不住 <span class="nstep"><button data-nid="${id}" data-dn="1">+</button></span></span><span class="nrange">可选 ${NIGHT_RANGE[id][0]}–${NIGHT_RANGE[id][1]} 晚，0 = 不住宿</span>`
           : `<span class="pill stay">住 <span class="nstep"><button data-nid="${id}" data-dn="-1" ${n <= NIGHT_RANGE[id][0] ? 'disabled' : ''}>−</button> ${n} <button data-nid="${id}" data-dn="1" ${n >= NIGHT_RANGE[id][1] ? 'disabled' : ''}>+</button></span> 晚 · ${money(stayRate(id))}/人/晚</span><span class="nrange">可选 ${NIGHT_RANGE[id][0]}–${NIGHT_RANGE[id][1]} 晚</span>`
 ) : n ? `<span class="pill stay">住 ${n} 晚 · ${money(stayRate(id))}/人/晚</span>`
           : `<span class="pill">${i === 0 ? '出发' : i === r.stops.length - 1 ? '终点' : '途经'}</span>`}</div>
