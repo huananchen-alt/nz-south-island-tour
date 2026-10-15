@@ -235,6 +235,6 @@ const VEHICLES = [
 // 报价咨询表单：客人提交后通过 Web3Forms 发邮件给我们
 // accessKey 在 https://web3forms.com 用收件邮箱免费获取（Access Key 本身可公开，不会暴露邮箱地址）
 const QUOTE_FORM = {
-  accessKey: '',
+  accessKey: '71d88f11-8cbf-4f2c-9013-c9970375aecc',
   subject: '新西兰南岛包车报价咨询',
 };
