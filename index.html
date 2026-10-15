@@ -119,6 +119,11 @@
   .qmsg { grid-column: 1 / -1; font-size: 13px; }
   .qmsg.ok { color: var(--ok); font-weight: 600; }
   .qmsg.err { color: var(--warn); }
+  .wxtip { grid-column: 1 / -1; font-size: 12px; background: #fff7e6; color: #8a5a00; border-radius: 8px; padding: 8px 10px; }
+  .fallback { grid-column: 1 / -1; display: grid; gap: 8px; }
+  .fallback .btns { display: flex; gap: 8px; flex-wrap: wrap; }
+  .fallback .btns a, .fallback .btns button { flex: 1; text-align: center; border: 1px solid var(--line); background: var(--soft); color: var(--ink); border-radius: 10px; padding: 9px; font: inherit; font-weight: 600; text-decoration: none; cursor: pointer; }
+  .fallback textarea { font-size: 12px; min-height: 120px; }
   table.cmp { width: 100%; border-collapse: collapse; font-size: 13px; }
   table.cmp th, table.cmp td { padding: 7px 6px; border-bottom: 1px solid var(--line); text-align: right; font-variant-numeric: tabular-nums; }
   table.cmp th:first-child, table.cmp td:first-child { text-align: left; }
@@ -181,8 +186,8 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<script src="data.js?v=202610152350"></script>
-<script src="geo.js?v=202610152350"></script>
+<script src="data.js?v=202610160851"></script>
+<script src="geo.js?v=202610160851"></script>
 <script>
 const $ = s => document.querySelector(s);
 const money = n => '$' + Math.round(n).toLocaleString('en-US');
@@ -478,10 +483,35 @@ function inquiryHtml(r) {
         ? `<textarea name="${f.k}">${esc(state.form[f.k])}</textarea>`
         : `<input name="${f.k}" type="${f.type || 'text'}" value="${esc(state.form[f.k])}" ${f.required ? 'required' : ''}>`}</label>`).join('')}
       <input type="checkbox" name="botcheck" style="display:none" tabindex="-1" autocomplete="off">
+      ${/MicroMessenger/i.test(navigator.userAgent) ? `<div class="wxtip">💡 您正在微信中浏览，如提交失败，请点右上角「···」选择「在浏览器中打开」后再提交。</div>` : ''}
       <button type="submit">提交报价咨询</button>
       <div class="qmsg" id="qmsg"></div>
+      <div class="fallback" id="qfallback" hidden></div>
     </form>
   </div>`;
+}
+
+// 提交失败时的备用方式：复制报价内容（发微信）或用邮件发送
+function quoteText(f) {
+  const lines = [`【${QUOTE_FORM.subject}】`, `客人姓名：${f.name}`, `微信/电话：${f.contact}`];
+  if (f.email) lines.push(`邮箱：${f.email}`);
+  if (f.date) lines.push(`计划出发日期：${f.date}`);
+  if (f.note) lines.push(`其他需求：${f.note}`);
+  Object.entries(state.quote).forEach(([k, v]) => lines.push(`${k}：${String(v).replace(/\n/g, '；')}`));
+  return lines.join('\n');
+}
+function showFallback(f) {
+  const box = $('#qfallback'), text = quoteText(f), to = QUOTE_FORM.fallbackEmail.join('@');
+  const mailto = `mailto:${to}?subject=${encodeURIComponent(QUOTE_FORM.subject + '｜' + f.name)}&body=${encodeURIComponent(text)}`;
+  box.hidden = false;
+  box.innerHTML = `<div class="btns"><button type="button" id="qcopy">📋 复制报价内容</button><a href="${mailto}">✉️ 用邮件发送</a></div>
+    <textarea readonly>${text.replace(/&/g, '&amp;').replace(/</g, '&lt;')}</textarea>`;
+  $('#qcopy').onclick = async () => {
+    const ta = box.querySelector('textarea');
+    try { await navigator.clipboard.writeText(text); }
+    catch { ta.focus(); ta.select(); document.execCommand('copy'); }
+    $('#qcopy').textContent = '✅ 已复制，可粘贴发送给我们';
+  };
 }
 
 function bindInquiry() {
@@ -494,7 +524,7 @@ function bindInquiry() {
     const f = state.form;
     if (!(f.name || '').trim() || !(f.contact || '').trim()) { msg.className = 'qmsg err'; msg.textContent = '请填写姓名和微信号 / 电话。'; return; }
     if (!QUOTE_FORM.accessKey) { msg.className = 'qmsg err'; msg.textContent = '报价系统尚未配置，请直接联系我们。'; return; }
-    btn.disabled = true; btn.textContent = '提交中…'; msg.textContent = '';
+    btn.disabled = true; btn.textContent = '提交中…'; msg.textContent = ''; $('#qfallback').hidden = true;
     try {
       const body = {
         access_key: QUOTE_FORM.accessKey,
@@ -513,7 +543,9 @@ function bindInquiry() {
       msg.className = 'qmsg ok'; msg.textContent = '✅ 已收到您的报价咨询，我们会尽快与您联系！';
       state.form = {}; FORM_FIELDS.forEach(x => { form[x.k].value = ''; });
     } catch (err) {
-      msg.className = 'qmsg err'; msg.textContent = '提交失败，请稍后重试或直接联系我们。（' + err.message + '）';
+      msg.className = 'qmsg err';
+      msg.textContent = '提交没有成功（' + err.message + '）。微信内置浏览器有时会被拦截，您可以：① 点右上角「···」选「在浏览器中打开」后重试；② 用下面的方式把报价内容发给我们。';
+      showFallback(f);
     } finally {
       btn.disabled = false; btn.textContent = '提交报价咨询';
     }
