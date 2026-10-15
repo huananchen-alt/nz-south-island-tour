@@ -168,8 +168,29 @@ const hmShort = m => { const h = Math.floor(m / 60), r = m % 60; return h ? `${h
 const geo = (a, b) => GEO[[a, b].sort().join('-')];
 
 const MAX_PEOPLE = 10;
-const cars = v => Math.ceil(state.people / v.pax);   // 人数超过车型载客量时自动按多辆车计算
-const state = { start: 'chc', route: 'central', people: 2, vehicle: 'benz-suv', days: null, picks: {}, tourIdx: -1, playing: null };
+const cars = v => Math.ceil(state.people / v.pax);   // 单一车型：人数超过载客量时按多辆车计算
+
+// 混搭车型：穷举各车型数量，找出能坐下所有人的每天最低总价（同价时车辆更少优先）
+function cheapestFleet() {
+  let best = null;
+  const walk = (i, f) => {
+    if (i === VEHICLES.length) {
+      const pax = VEHICLES.reduce((n, v) => n + v.pax * f[v.id], 0);
+      if (pax < state.people) return;
+      const price = fleetPrice(f), count = Object.values(f).reduce((a, b) => a + b, 0);
+      if (!best || price < best.price || (price === best.price && count < best.count)) best = { fleet: { ...f }, price, count };
+      return;
+    }
+    const v = VEHICLES[i];
+    for (let n = 0; n <= cars(v); n++) walk(i + 1, { ...f, [v.id]: n });
+  };
+  walk(0, {});
+  return best.fleet;
+}
+const fleetPrice = f => VEHICLES.reduce((s, v) => s + v.price * (f[v.id] || 0), 0);
+const fleetLabel = f => VEHICLES.filter(v => f[v.id]).map(v => `${v.name}${f[v.id] > 1 ? ` × ${f[v.id]} 辆` : ''}`).join(' + ');
+const fleet = () => state.vehicle === 'auto' ? cheapestFleet() : { [state.vehicle]: cars(VEHICLES.find(v => v.id === state.vehicle)) };
+const state = { start: 'chc', route: 'central', people: 2, vehicle: 'auto', days: null, picks: {}, tourIdx: -1, playing: null };
 
 // 按出发城市调整线路方向：单程线路反向，环线换起点；单独行程固定出发城市
 function orient(r) {
@@ -341,7 +362,13 @@ function vehicleHtml(days) {
       <span class="step"><button data-d="-1">−</button><span id="ppl">${state.people} 人</span><button data-d="1">+</button></span>
       ${state.route !== 'all' ? `包车天数 <span class="step"><button data-day="-1">−</button><span>${days} 天</span><button data-day="1">+</button></span>` : ''}
     </div>
-    <div class="veh">${VEHICLES.map(v => {
+    <div class="veh">${(() => {
+      const f = cheapestFleet();
+      return `<div class="vcard ${state.vehicle === 'auto' ? 'on' : ''}" data-v="auto">
+        <div class="ico">💡</div>
+        <div><div class="vn">最省钱组合<span class="cnt">推荐</span></div><div class="vd">${fleetLabel(f)}</div></div>
+        <div class="vp">${money(fleetPrice(f))}<small>每天</small></div></div>`;
+    })()}${VEHICLES.map(v => {
       const n = cars(v);
       return `<div class="vcard ${state.vehicle === v.id ? 'on' : ''}" data-v="${v.id}">
         <div class="ico">${v.img}</div>
@@ -363,11 +390,8 @@ function bindVehicle() {
   document.querySelectorAll('.vcard').forEach(c => c.onclick = () => { state.vehicle = c.dataset.v; render(); });
 }
 
-// 改人数：当前车型坐不下时，自动换成每天总价最低的车型组合
 function setPeople(n) {
   state.people = Math.min(MAX_PEOPLE, Math.max(1, n));
-  const cur = VEHICLES.find(v => v.id === state.vehicle);
-  if (cur.pax < state.people) state.vehicle = VEHICLES.reduce((a, b) => b.price * cars(b) < a.price * cars(a) ? b : a).id;
   const y = $('aside').scrollTop; render(); $('aside').scrollTop = y;
 }
 
@@ -375,7 +399,6 @@ function renderRoute(r) {
   const s = routeStats(r);
   const days = state.days ?? s.days;
   const picks = state.picks[r.id] = state.picks[r.id] || {};
-  const v = VEHICLES.find(v => v.id === state.vehicle);
 
   let tl = '';
   r.stops.forEach((id, i) => {
@@ -405,7 +428,7 @@ function renderRoute(r) {
   const actPP = Object.keys(picks).filter(k => picks[k]).reduce((sum, k) => {
     const [id, idx] = k.split(':'); return sum + PLACES[id].acts[idx].p;
   }, 0);
-  const car = v.price * cars(v) * days, stay = s.stay * state.people, act = actPP * state.people;
+  const fl = fleet(), car = fleetPrice(fl) * days, stay = s.stay * state.people, act = actPP * state.people;
   const total = car + stay + act;
 
   const starStops = r.stops.filter((id, i, a) => a.indexOf(id) === i && hasStars(r, id));
@@ -431,7 +454,7 @@ function renderRoute(r) {
     ${vehicleHtml(days)}
     <section style="border-bottom:0">
       <div class="quote">
-        <div class="ln"><span>包车 ${v.name}${cars(v) > 1 ? ` × ${cars(v)} 辆` : ''} × ${days} 天</span><span>${money(car)}</span></div>
+        <div class="ln"><span>包车 ${fleetLabel(fl)} × ${days} 天</span><span>${money(car)}</span></div>
         <div class="ln"><span>住宿 ${s.nights} 晚 × ${state.people} 人</span><span>${money(stay)}</span></div>
         <div class="ln"><span>已选活动 ${money(actPP)}/人 × ${state.people} 人</span><span>${money(act)}</span></div>
         ${starNights ? `<div class="ln"><span>✨ 星空/极光拍摄（最多 ${starNights} 晚，视天气）</span><span>免费</span></div>` : ''}
@@ -448,12 +471,11 @@ function renderRoute(r) {
 }
 
 function renderAll() {
-  const v = VEHICLES.find(v => v.id === state.vehicle);
   const rows = type => OR.filter(r => r.type === type).map(r => {
     const s = routeStats(r);
     return `<tr><td><span class="dot" style="background:${r.color}"></span><b>${r.name}</b></td>
       <td>${s.days}天</td><td>${s.km.toLocaleString()}</td><td>${Math.round(s.drive / 6) / 10}h</td><td>${money(s.stay)}</td>
-      <td>${money(v.price * cars(v) * s.days + s.stay * state.people)}</td></tr>`;
+      <td>${money(fleetPrice(fleet()) * s.days + s.stay * state.people)}</td></tr>`;
   }).join('');
   const head = `<thead><tr><th>线路</th><th>天数</th><th>里程 km</th><th>驾车</th><th>住宿/人</th><th>包车+住宿*</th></tr></thead>`;
   const list = type => OR.filter(r => r.type === type).map(r => `<p style="margin:0 0 10px"><span class="dot" style="background:${r.color}"></span><b>${r.name} · ${r.sub}</b><br><span class="desc">${r.stops.map(id => PLACES[id].name).join(' → ')}</span></p>`).join('');
@@ -466,7 +488,7 @@ function renderAll() {
     <section>
       <h2>单独行程（可加在任意线路前后）</h2>
       <table class="cmp">${head}<tbody>${rows('side')}</tbody></table>
-      <p class="fine">* 按当前选择：${state.people} 人，${v.name}${cars(v) > 1 ? ` × ${cars(v)} 辆` : ''}（${money(v.price * cars(v))}/天），不含活动。</p>
+      <p class="fine">* 按当前选择：${state.people} 人，${fleetLabel(fleet())}（${money(fleetPrice(fleet()))}/天），不含活动。</p>
     </section>
     <section>
       <h2>途经地一览</h2>
