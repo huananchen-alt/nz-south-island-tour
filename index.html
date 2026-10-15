@@ -114,6 +114,8 @@
   .inquiry textarea { min-height: 64px; resize: vertical; }
   .inquiry button[type=submit] { grid-column: 1 / -1; border: 0; border-radius: 10px; padding: 11px; font: inherit; font-weight: 700; background: var(--c, var(--ink)); color: #fff; cursor: pointer; }
   .inquiry button[disabled] { opacity: .6; cursor: wait; }
+  .qsum { margin-top: 10px; background: var(--soft); border-radius: 10px; padding: 10px 12px; font-size: 13px; display: grid; grid-template-columns: 1fr 1fr; gap: 2px 12px; }
+  .qsum b { grid-column: 1 / -1; margin-bottom: 2px; }
   .qmsg { grid-column: 1 / -1; font-size: 13px; }
   .qmsg.ok { color: var(--ok); font-weight: 600; }
   .qmsg.err { color: var(--warn); }
@@ -179,8 +181,8 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<script src="data.js?v=202610152339"></script>
-<script src="geo.js?v=202610152339"></script>
+<script src="data.js?v=202610152340"></script>
+<script src="geo.js?v=202610152340"></script>
 <script>
 const $ = s => document.querySelector(s);
 const money = n => '$' + Math.round(n).toLocaleString('en-US');
@@ -449,11 +451,18 @@ const FORM_FIELDS = [
 ];
 state.form = {};
 
+// 住宿安排：每个默认要住或可选住宿的地点 + 选择的晚数（选 0 显示"不住"）
+const stayPlan = r => r.stops.map((id, i) => (r.baseNights || r.nights)[i] > 0
+  ? { id, name: PLACES[id].name, n: r.nights[i], rate: stayRate(id) } : null).filter(Boolean);
+
 function inquiryHtml(r) {
   const esc = v => String(v || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
   return `<div class="inquiry" style="--c:${r.color}">
     <h2>📩 提交报价咨询</h2>
     <p class="fine" style="margin:0">留下联系方式，我们会根据您以上的线路、人数、车型和活动选择，尽快联系您确认行程和最终报价。</p>
+    <div class="qsum"><b>🏨 您选择的住宿安排（共 ${r.nights.reduce((a, b) => a + b, 0)} 晚）</b>
+      ${stayPlan(r).map(x => `<span>${x.name}：${x.n ? `${x.n} 晚 · ${money(x.rate)}/人/晚` : '不住'}</span>`).join('')}
+    </div>
     <form id="qform" novalidate>
       ${FORM_FIELDS.map(f => `<label class="${f.area ? 'full' : ''}">${f.label}${f.area
         ? `<textarea name="${f.k}">${esc(state.form[f.k])}</textarea>`
@@ -580,10 +589,10 @@ function renderRoute(r) {
   state.quote = {
     '线路': `${r.name} · ${r.sub}`,
     '路线': r.stops.map(id => PLACES[id].name).join(' → '),
-    '住宿安排': r.stops.map((id, i) => r.nights[i] ? `${PLACES[id].name} ${r.nights[i]} 晚` : '').filter(Boolean).join('、'),
+    '住宿安排': stayPlan(r).map(x => `${x.name}：${x.n ? `${x.n} 晚（${money(x.rate)}/人/晚）` : '不住'}`).join('\n'),
     '出行月份': `${state.month} 月（${seasonName()}：${season().why}）`,
     '出行人数': `${state.people} 人`,
-    '包车天数': `${days} 天（建议 ${s.days}天${s.nights}晚）`,
+    '包车天数': `${days} 天（行程 ${s.days}天${s.nights}晚）`,
     '包车车辆': `${fleetLabel(fl)}（${money(fleetPrice(fl))}/天）`,
     '已选活动': actList.length ? actList.join('\n') : '未选择',
     '包车费': money(car),
