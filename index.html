@@ -212,11 +212,11 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://js.hcaptcha.com/1/api.js?render=explicit&hl=zh-CN" async defer></script>
-<script src="data.js?v=202610162354"></script>
-<script src="geo.js?v=202610162354"></script>
+<script src="data.js?v=202610162358"></script>
+<script src="geo.js?v=202610162358"></script>
 <script>
 // 页面版本（由 bump-version.sh 更新）。微信等浏览器会缓存旧页面，打开时和提交前都检查一次，过期就自动刷新
-const PAGE_VERSION = '202610162354';
+const PAGE_VERSION = '202610162358';
 const latestVersion = () => fetch(`version.json?t=${Date.now()}`, { cache: 'no-store' }).then(r => r.json()).then(d => d.v).catch(() => null);
 function reloadTo(v) {
   try { if (sessionStorage.getItem('reloaded') === v) return false; sessionStorage.setItem('reloaded', v); } catch {}
@@ -354,6 +354,10 @@ const hasStars = (r, id) => !!(r && r.stars && PLACES[id].stars && r.stops.some(
 const fromTo = r => r.stops[0] === r.stops[r.stops.length - 1]
   ? `${PLACES[r.stops[0]].name}出发 · ${r.loop ? '环线' : '往返'}返回${PLACES[r.stops[0]].name}`
   : `${PLACES[r.stops[0]].name} → ${PLACES[r.stops[r.stops.length - 1]].name}`;
+
+// 包车天数：抵达起点城市当天只提供接机（当天或前一天），不算包车日
+const arrivalFree = r => r.nights[0] > 0;
+const charterDays = (r, s = routeStats(r)) => Math.max(1, s.days - (arrivalFree(r) ? 1 : 0));
 
 function routeStats(r) {
   const km = r.legs.reduce((s, _, i) => s + (geo(r.stops[i], r.stops[i + 1]) || { km: 0 }).km, 0);
@@ -530,7 +534,7 @@ function bindVehicle() {
   });
   document.querySelectorAll('[data-day]').forEach(b => b.onclick = () => {
     const r = active();
-    state.days = Math.max(1, (state.days ?? routeStats(r).days) + +b.dataset.day);
+    state.days = Math.max(1, (state.days ?? charterDays(r)) + +b.dataset.day);
     render();
   });
   document.querySelectorAll('.vcard').forEach(c => c.onclick = () => { state.vehicle = c.dataset.v; render(); });
@@ -679,7 +683,7 @@ function bindInquiry() {
 // 接送机：起点 / 终点是有机场服务的城市时可选
 function airportLegs(r, days, fl) {
   const sel = state.airport[r.id] || {}, n = fleetCount(fl), free = days >= AIRPORT.minDays, out = [];
-  [['pickup', '接机', r.stops[0], '行程开始当天'], ['dropoff', '送机', r.stops[r.stops.length - 1], '行程结束当天']].forEach(([k, label, city, when]) => {
+  [['pickup', '接机', r.stops[0], '抵达当天或前一天'], ['dropoff', '送机', r.stops[r.stops.length - 1], '行程结束当天']].forEach(([k, label, city, when]) => {
     if (!(city in AIRPORT.fee)) return;
     out.push({ k, label, city, when, on: !!sel[k], fee: free ? 0 : AIRPORT.fee[city] * n, unit: AIRPORT.fee[city] });
   });
@@ -753,7 +757,7 @@ function renderRoute(r) {
     return;
   }
   const s = routeStats(r);
-  const days = state.days ?? s.days;
+  const days = state.days ?? charterDays(r, s);
   const picks = state.picks[r.id] = state.picks[r.id] || {};
 
   let tl = '';
@@ -821,7 +825,7 @@ function renderRoute(r) {
     ${vehicleHtml(days)}
     <section style="border-bottom:0">
       <div class="quote">
-        <div class="ln"><span>包车 ${fleetLabel(fl)} × ${days} 天</span><span>${money(car)}</span></div>
+        <div class="ln"><span>包车 ${fleetLabel(fl)} × ${days} 天${arrivalFree(r) ? `<br><small>抵达${PLACES[r.stops[0]].name}当天只接机，不算包车日</small>` : ''}</span><span>${money(car)}</span></div>
         ${dh ? `<div class="ln"><span>司导及车辆空驶费 ${dhLegs.length} 段 × ${fleetCount(fl)} 辆 × ${money(DEADHEAD.fee)}<br><small>${dhLegs.join('；')}</small></span><span>${money(dh)}</span></div>` : ''}
         ${airOn.map(a => `<div class="ln"><span>${a.label}（${PLACES[a.city].name}机场）${a.fee ? '' : ` · 包车满 ${AIRPORT.minDays} 天`}</span><span>${a.fee ? money(a.fee) : '免费'}</span></div>`).join('')}
         <div class="ln"><span>住宿 ${s.nights} 晚 × ${state.people} 人（常规–高端）</span><span>${mr(stay)}</span></div>
@@ -843,7 +847,7 @@ function renderRoute(r) {
     '住宿安排': stayPlan(r).map(x => `${x.name}：${x.n ? `${x.n} 晚（${mr(x.rate)}/人/晚）` : '不住'}`).join('\n'),
     '出行月份': `${state.month} 月（${seasonName()}：${season().why}）`,
     '出行人数': `${state.people} 人`,
-    '包车天数': `${days} 天（行程 ${s.days}天${s.nights}晚）`,
+    '包车天数': `${days} 天（行程 ${s.days}天${s.nights}晚${arrivalFree(r) ? `，抵达${PLACES[r.stops[0]].name}当天只接机、不算包车日` : ''}）`,
     '包车车辆': `${fleetLabel(fl)}（${money(fleetPrice(fl))}/天）`,
     '已选活动': actList.length ? actList.join('\n') : '未选择',
     '包车费': money(car),
@@ -870,9 +874,9 @@ function renderAll() {
     const s = routeStats(r);
     return `<tr><td><span class="dot" style="background:${r.color}"></span><b>${r.name}</b></td>
       <td>${s.days}天</td><td>${s.km.toLocaleString()}</td><td>${Math.round(s.drive / 6) / 10}h</td><td>${mr(s.stay)}</td>
-      <td>${mr(radd(fleetPrice(fleet()) * s.days, deadheadFee(r, fleet()), rmul(s.stay, state.people)))}</td></tr>`;
+      <td>${mr(radd(fleetPrice(fleet()) * charterDays(r, s), deadheadFee(r, fleet()), rmul(s.stay, state.people)))}</td></tr>`;
   }).join('');
-  const head = `<thead><tr><th>线路</th><th>天数</th><th>里程 km</th><th>驾车</th><th>住宿/人</th><th>包车+空驶+住宿*</th></tr></thead>`;
+  const head = `<thead><tr><th>线路</th><th>行程天数</th><th>里程 km</th><th>驾车</th><th>住宿/人</th><th>包车+空驶+住宿*</th></tr></thead>`;
   const list = type => OR.filter(r => r.type === type).map(r => `<p style="margin:0 0 10px"><span class="dot" style="background:${r.color}"></span><b>${r.name} · ${r.sub}</b><br><span class="desc">${r.stops.map(id => PLACES[id].name).join(' → ')}</span></p>`).join('');
   $('#content').innerHTML = `
     <section>
