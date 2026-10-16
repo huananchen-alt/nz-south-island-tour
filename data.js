@@ -245,7 +245,7 @@ const ROUTES = [
   { id: 'east', type: 'main', stars: true, name: '东线', sub: '海岸野生动物 · 慢节奏', color: '#e2780e',
     desc: '沿太平洋海岸南下：奥马鲁企鹅、但尼丁苏格兰风情老城，再穿过中奥塔哥直达皇后镇。',
     stops:  ['chc', 'oam', 'dun', 'zqn'],
-    nights: [1, 1, 2, 1],
+    nights: [1, 1, 1, 1],
     legs:   [210, 100, 225],
     legNotes: ['', '', '穿越中奥塔哥 Central Otago'] },
   { id: 'west', type: 'main', stars: true, starsOnly: true, name: '西线', sub: '冰川雨林 · 越野风光', color: '#1a9c6b',
@@ -257,7 +257,7 @@ const ROUTES = [
   { id: 'loop', type: 'main', stars: true, loop: true, name: '中线+东线', sub: '南岛环线 · 一次看全', color: '#7c3aed',
     desc: '中线与东线连成一个环：内陆走雪山湖泊，海岸看野生动物，起点终点同一城市，免去单程还车 / 回程机票的麻烦。',
     stops:  ['chc', 'tek', 'mtc', 'twz', 'wan', 'zqn', 'dun', 'oam', 'chc'],
-    nights: [1, 1, 0, 1, 1, 2, 2, 1, 0],
+    nights: [1, 1, 0, 1, 1, 2, 1, 1, 0],
     legs:   [180, 75, 50, 110, 60, 225, 100, 210],
     legNotes: ['', '', '白天游览库克山，晚上回特威泽尔住宿看星空', '途经林迪斯山口 Lindis Pass', '经皇冠山公路 Crown Range', '穿越中奥塔哥 Central Otago', '', ''] },
   // 北岛：三个固定套餐（晚数固定，不可调整）；去程途经霍比特村，回程途经怀托摩萤火虫洞（optionalStops：客人可选择不去）
