@@ -111,6 +111,9 @@
   .vcard .vp { margin-left: auto; text-align: right; font-weight: 700; font-size: 16px; white-space: nowrap; }
   .vcard .vp small { display: block; font-weight: 400; font-size: 11px; color: var(--muted); }
   .vcard.on { border-color: var(--ink); box-shadow: 0 0 0 2px rgba(29,35,39,.15); }
+  .row.picked { gap: 6px; font-size: 14px; }
+  .row.picked b { font-size: 15px; }
+  .row.picked small { flex-basis: 100%; color: var(--muted); font-size: 11px; margin-top: -6px; }
   .row { display: flex; align-items: center; gap: 10px; margin: 0 0 12px; flex-wrap: wrap; }
   .step { display: inline-flex; align-items: center; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
   .step button { border: 0; background: var(--soft); width: 32px; height: 32px; font-size: 18px; cursor: pointer; color: var(--ink); }
@@ -220,11 +223,11 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://js.hcaptcha.com/1/api.js?render=explicit&hl=zh-CN" async defer></script>
-<script src="data.js?v=202610170116"></script>
-<script src="geo.js?v=202610170116"></script>
+<script src="data.js?v=202610170123"></script>
+<script src="geo.js?v=202610170123"></script>
 <script>
 // 页面版本（由 bump-version.sh 更新）。微信等浏览器会缓存旧页面，打开时和提交前都检查一次，过期就自动刷新
-const PAGE_VERSION = '202610170116';
+const PAGE_VERSION = '202610170123';
 const latestVersion = () => fetch(`version.json?t=${Date.now()}`, { cache: 'no-store' }).then(r => r.json()).then(d => d.v).catch(() => null);
 function reloadTo(v) {
   try { if (sessionStorage.getItem('reloaded') === v) return false; sessionStorage.setItem('reloaded', v); } catch {}
@@ -539,13 +542,11 @@ function renderTabs() {
   });
 }
 
-function vehicleHtml(days) {
+function vehicleHtml(days, preDays = 0) {
   return `<section>
     <h2>🚐 包车车型与报价</h2>
-    <div class="row">出行人数
-      <span class="step"><button data-d="-1">−</button><span id="ppl">${state.people} 人</span><button data-d="1">+</button></span>
-      ${state.route !== 'all' ? `包车天数 <span class="step"><button data-day="-1">−</button><span>${days} 天</span><button data-day="1">+</button></span>` : ''}
-    </div>
+    <div class="row picked">已选：<b>${state.people} 人</b>${state.route !== 'all' ? `<span>·</span>包车 <b>${days} 天</b>${preDays ? `<span>+</span>出发前用车 <b>${preDays} 天</b>` : ''}` : ''}
+      <small>（人数在上方选择，包车天数按行程和日期自动计算）</small></div>
     <div class="veh">${(() => {
       const f = cheapestFleet();
       return `<div class="vcard ${state.vehicle === 'auto' ? 'on' : ''}" data-v="auto">
@@ -918,7 +919,7 @@ function renderRoute(r) {
     <section><h2>📍 途经地与每段车程</h2><p class="fine" style="margin:-4px 0 10px">勾选活动可加入下方报价 · 点击站点或车程在地图上定位</p><div class="timeline">${tl}</div></section>
     ${datesHtml(r, td, pre)}
     ${airportHtml(r, air, days)}
-    ${vehicleHtml(days)}
+    ${vehicleHtml(days, pre && pre.carOn ? pre.carDays : 0)}
     <section style="border-bottom:0">
       <div class="quote">
         <div class="ln"><span>包车 ${fleetLabel(fl)} × ${days} 天${freeDayNote(r) ? `<br><small>${freeDayNote(r)}，不算包车日</small>` : ''}</span><span>${money(car)}</span></div>
