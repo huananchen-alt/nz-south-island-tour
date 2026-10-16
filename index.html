@@ -212,11 +212,11 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://js.hcaptcha.com/1/api.js?render=explicit&hl=zh-CN" async defer></script>
-<script src="data.js?v=202610162340"></script>
-<script src="geo.js?v=202610162340"></script>
+<script src="data.js?v=202610162346"></script>
+<script src="geo.js?v=202610162346"></script>
 <script>
 // 页面版本（由 bump-version.sh 更新）。微信等浏览器会缓存旧页面，打开时和提交前都检查一次，过期就自动刷新
-const PAGE_VERSION = '202610162340';
+const PAGE_VERSION = '202610162346';
 const latestVersion = () => fetch(`version.json?t=${Date.now()}`, { cache: 'no-store' }).then(r => r.json()).then(d => d.v).catch(() => null);
 function reloadTo(v) {
   try { if (sessionStorage.getItem('reloaded') === v) return false; sessionStorage.setItem('reloaded', v); } catch {}
@@ -702,7 +702,8 @@ function addonHtml(r) {
 
 function builderHtml(r) {
   const isl = state.custom.island;
-  const ids = Object.keys(PLACES).filter(id => (PLACES[id].island || 'S') === isl);
+  // 只列可住宿的地点，且不含但尼丁以南（卡特林斯、因弗卡吉尔）
+  const ids = Object.keys(PLACES).filter(id => (PLACES[id].island || 'S') === isl && PLACES[id].stay[1] > 0 && PLACES[id].lat >= PLACES.dun.lat);
   return `<section class="builder" style="--c:${r.color}">
     <h2>🧭 自由组合：按行程顺序点选地点</h2>
     <div class="row">岛屿 <span class="seg">${[['S', '南岛'], ['N', '北岛']].map(([k, n]) => `<button class="${isl === k ? 'on' : ''}" data-cisl="${k}">${n}</button>`).join('')}</span>
