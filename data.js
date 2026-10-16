@@ -311,7 +311,7 @@ const VEHICLES = [
 // accessKey 在 https://web3forms.com 用收件邮箱免费获取（Access Key 本身可公开，不会暴露邮箱地址）
 const QUOTE_FORM = {
   accessKey: '71d88f11-8cbf-4f2c-9013-c9970375aecc',
-  subject: '新西兰南岛包车报价咨询',
+  subject: '新西兰包车报价咨询',
   // 提交失败时的备用邮箱（拆开写，减少被爬虫抓取）
   fallbackEmail: ['goldeneast88', 'gmail.com'],
   // Web3Forms 免费版共用的 hCaptcha sitekey（需在 Web3Forms 后台把该表单的验证码设为 hCaptcha）
