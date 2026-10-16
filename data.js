@@ -1,9 +1,9 @@
 // 新西兰南岛线路数据（价格单位：新西兰元 NZD，2026 旺季参考价，以实际预订为准）
-// stay = 平均每人每晚住宿费用（按两人一间均摊，3–4 星酒店/精品民宿）
+// stay = 每人每晚住宿价格区间 [常规, 高端]（按两人一间均摊；常规 = 3–4 星酒店/汽车旅馆，高端 = 当地高端酒店/精品度假屋）
 // 活动 p = 每人价格（0 = 免费），d = 游玩时长
 
 const PLACES = {
-  chc: { name: '基督城', en: 'Christchurch', lat: -43.5321, lng: 172.6362, stay: 110,
+  chc: { name: '基督城', en: 'Christchurch', lat: -43.5321, lng: 172.6362, stay: [80, 300],
     intro: '南岛门户城市，"花园之城"，大多数游客在此落地取车。',
     acts: [
       { n: '雅芳河撑篙游船 Punting', p: 40, d: '30 分钟', t: '休闲' },
@@ -11,7 +11,7 @@ const PLACES = {
       { n: '植物园 + 哈格利公园漫步', p: 0, d: '1.5 小时', t: '自然' },
       { n: '复古电车环城游 Tram', p: 35, d: '1 小时', t: '城市' },
     ] },
-  tek: { stars: true, name: '蒂卡波湖', en: 'Lake Tekapo', lat: -44.0047, lng: 170.4772, stay: 160,
+  tek: { stars: true, name: '蒂卡波湖', en: 'Lake Tekapo', lat: -44.0047, lng: 170.4772, stay: [100, 350],
     intro: '牛奶蓝湖水 + 好牧羊人教堂 + 世界级暗夜星空保护区，11–12 月鲁冰花盛开。',
     acts: [
       { n: '好牧羊人教堂 Church of the Good Shepherd', p: 0, d: '30 分钟', t: '打卡' },
@@ -19,7 +19,7 @@ const PLACES = {
       { n: '约翰山天文台徒步 Mt John', p: 0, d: '2 小时', t: '徒步' },
       { n: '蒂卡波温泉 Tekapo Springs', p: 40, d: '2 小时', t: '休闲' },
     ] },
-  mtc: { name: '库克山', en: 'Aoraki / Mt Cook', lat: -43.7342, lng: 170.0960, stay: 220,
+  mtc: { name: '库克山', en: 'Aoraki / Mt Cook', lat: -43.7342, lng: 170.0960, stay: [150, 450],
     intro: '新西兰最高峰 3724 米，冰川、冰湖与高山步道。',
     acts: [
       { n: '胡克谷步道 Hooker Valley Track', p: 0, d: '3 小时', t: '徒步' },
@@ -28,14 +28,14 @@ const PLACES = {
       { n: '塔斯曼冰川直升机徒步 Tasman Glacier Heli Hike', p: 795, d: '3.5 小时', t: '冰川' },
       { n: '埃德蒙·希拉里爵士高山中心', p: 25, d: '1 小时', t: '文化' },
     ] },
-  twz: { name: '特威泽尔', en: 'Twizel', lat: -44.2580, lng: 170.0990, stay: 130, stars: true,
+  twz: { name: '特威泽尔', en: 'Twizel', lat: -44.2580, lng: 170.0990, stay: [80, 250], stars: true,
     intro: '麦肯齐盆地暗夜保护区里的宁静小镇，紧邻普卡基湖，是住宿、看星空的理想据点。',
     acts: [
       { n: '普卡基湖彼得观景点 Peter’s Lookout（远眺库克山）', p: 0, d: '30 分钟', t: '打卡' },
       { n: '库克山高山三文鱼 Mt Cook Alpine Salmon', p: 30, d: '45 分钟', t: '美食' },
       { n: '鲁阿塔尼瓦湖畔散步 Lake Ruataniwha', p: 0, d: '1 小时', t: '休闲' },
     ] },
-  wan: { stars: true, name: '瓦纳卡', en: 'Wanaka', lat: -44.7032, lng: 169.1321, stay: 140,
+  wan: { stars: true, name: '瓦纳卡', en: 'Wanaka', lat: -44.7032, lng: 169.1321, stay: [100, 450],
     intro: '比皇后镇更安静的湖畔小镇，"孤独的树"所在地。',
     acts: [
       { n: '孤独的树 That Wanaka Tree', p: 0, d: '30 分钟', t: '打卡' },
@@ -45,7 +45,7 @@ const PLACES = {
       { n: '真枪射击体验 Real Guns NZ（卡德罗纳山谷）', p: 170, d: '2 小时', t: '刺激' },
       { n: '瓦纳卡湖皮划艇', p: 70, d: '2 小时', t: '休闲' },
     ] },
-  zqn: { stars: true, name: '皇后镇', en: 'Queenstown', lat: -45.0312, lng: 168.6626, stay: 160,
+  zqn: { stars: true, name: '皇后镇', en: 'Queenstown', lat: -45.0312, lng: 168.6626, stay: [110, 550],
     intro: '世界冒险之都，蹦极、喷射快艇发源地，湖光山色。',
     acts: [
       { n: '天空缆车 + 斜坡滑车 Skyline Gondola & Luge', p: 95, d: '2 小时', t: '观景' },
@@ -55,13 +55,13 @@ const PLACES = {
       { n: '厄恩斯劳号蒸汽船 + 瓦尔特峰牧场', p: 95, d: '3.5 小时', t: '休闲' },
       { n: '箭镇淘金小镇 Arrowtown', p: 0, d: '2 小时', t: '文化' },
     ] },
-  tea: { name: '蒂阿瑙', en: 'Te Anau', lat: -45.4144, lng: 167.7180, stay: 120,
+  tea: { name: '蒂阿瑙', en: 'Te Anau', lat: -45.4144, lng: 167.7180, stay: [80, 250],
     intro: '峡湾国家公园门户，前往米尔福德峡湾的最佳过夜点。',
     acts: [
       { n: '萤火虫洞 Te Anau Glowworm Caves', p: 119, d: '2.5 小时', t: '自然' },
       { n: '蒂阿瑙湖畔步道', p: 0, d: '1 小时', t: '休闲' },
     ] },
-  mil: { name: '米尔福德峡湾', en: 'Milford Sound', lat: -44.6414, lng: 167.8974, stay: 0,
+  mil: { name: '米尔福德峡湾', en: 'Milford Sound', lat: -44.6414, lng: 167.8974, stay: [0, 0],
     intro: '"世界第八大奇迹"，峡湾瀑布与海豹海豚，一日往返。',
     acts: [
       { n: '峡湾游船 Milford Sound Cruise', p: 119, d: '2 小时', t: '自然' },
@@ -69,7 +69,7 @@ const PLACES = {
       { n: '峡湾皮划艇', p: 199, d: '4 小时', t: '探险' },
       { n: '峡湾观光飞机（回程飞皇后镇）', p: 599, d: '1.5 小时', t: '刺激' },
     ] },
-  kai: { name: '凯库拉', en: 'Kaikōura', lat: -42.4008, lng: 173.6814, stay: 110,
+  kai: { name: '凯库拉', en: 'Kaikōura', lat: -42.4008, lng: 173.6814, stay: [80, 300],
     intro: '雪山直插大海，全年可观抹香鲸、海豚、海豹，龙虾闻名。',
     acts: [
       { n: '出海观鲸 Whale Watch', p: 175, d: '3.5 小时', t: '野生动物' },
@@ -77,7 +77,7 @@ const PLACES = {
       { n: '海豹栖息地 Point Kean', p: 0, d: '1 小时', t: '野生动物' },
       { n: '海边龙虾餐', p: 70, d: '1 小时', t: '美食' },
     ] },
-  aka: { name: '阿卡罗阿', en: 'Akaroa', lat: -43.8037, lng: 172.9680, stay: 130,
+  aka: { name: '阿卡罗阿', en: 'Akaroa', lat: -43.8037, lng: 172.9680, stay: [90, 300],
     intro: '火山口海湾里的法式小镇，可出海看世界最小、最稀有的赫氏海豚。',
     acts: [
       { n: '黑猫号海湾游船（看赫氏海豚）Black Cat Cruise', p: 95, d: '2 小时', t: '野生动物' },
@@ -85,20 +85,20 @@ const PLACES = {
       { n: '法式小镇漫步 + 灯塔', p: 0, d: '1.5 小时', t: '城市' },
       { n: '鲑鱼 / 生蚝海鲜午餐', p: 50, d: '1 小时', t: '美食' },
     ] },
-  oam: { stars: true, name: '奥马鲁', en: 'Oamaru', lat: -45.0975, lng: 170.9704, stay: 100,
+  oam: { stars: true, name: '奥马鲁', en: 'Oamaru', lat: -45.0975, lng: 170.9704, stay: [70, 200],
     intro: '维多利亚式白石建筑小镇，蒸汽朋克之都，小蓝企鹅归巢。',
     acts: [
       { n: '小蓝企鹅归巢 Blue Penguin Colony', p: 45, d: '1.5 小时', t: '野生动物' },
       { n: '蒸汽朋克总部 Steampunk HQ', p: 15, d: '1 小时', t: '文化' },
       { n: '维多利亚老城区漫步', p: 0, d: '1 小时', t: '城市' },
     ] },
-  moe: { name: '摩拉基大圆石', en: 'Moeraki Boulders', lat: -45.3450, lng: 170.8260, stay: 0,
+  moe: { name: '摩拉基大圆石', en: 'Moeraki Boulders', lat: -45.3450, lng: 170.8260, stay: [0, 0],
     intro: '海滩上散落的巨大球形岩石，退潮时拍摄最佳。',
     acts: [
       { n: '摩拉基大圆石海滩', p: 0, d: '1 小时', t: '打卡' },
       { n: 'Fleur’s Place 海鲜餐厅', p: 60, d: '1 小时', t: '美食' },
     ] },
-  dun: { stars: true, name: '但尼丁', en: 'Dunedin', lat: -45.8788, lng: 170.5028, stay: 100,
+  dun: { stars: true, name: '但尼丁', en: 'Dunedin', lat: -45.8788, lng: 170.5028, stay: [70, 250],
     intro: '"南半球的爱丁堡"，苏格兰风情大学城，百年火车站与八角广场漫步即可游览。',
     acts: [
       { n: '八角广场 The Octagon（市中心）', p: 0, d: '30 分钟', t: '城市' },
@@ -106,40 +106,40 @@ const PLACES = {
       { n: '但尼丁火车站 Dunedin Railway Station', p: 0, d: '30 分钟', t: '文化' },
       { n: '隧道海滩 Tunnel Beach', p: 0, d: '1.5 小时', t: '徒步' },
     ] },
-  cat: { name: '卡特林斯', en: 'The Catlins', lat: -46.4500, lng: 169.6600, stay: 90,
+  cat: { name: '卡特林斯', en: 'The Catlins', lat: -46.4500, lng: 169.6600, stay: [70, 200],
     intro: '原始海岸雨林，灯塔、瀑布、海狮与黄眼企鹅。',
     acts: [
       { n: '金块角灯塔 Nugget Point', p: 0, d: '1 小时', t: '打卡' },
       { n: '珀拉考努伊瀑布 Purakaunui Falls', p: 0, d: '30 分钟', t: '自然' },
       { n: '库里奥湾石化森林 Curio Bay', p: 0, d: '1 小时', t: '自然' },
     ] },
-  ivc: { name: '因弗卡吉尔', en: 'Invercargill', lat: -46.4132, lng: 168.3538, stay: 85,
+  ivc: { name: '因弗卡吉尔', en: 'Invercargill', lat: -46.4132, lng: 168.3538, stay: [60, 180],
     intro: '新西兰最南端城市，布拉夫生蚝产地，可远眺斯图尔特岛。',
     acts: [
       { n: '布拉夫斯特灵角路标 Stirling Point', p: 0, d: '30 分钟', t: '打卡' },
       { n: '布拉夫生蚝（3–8 月当季）', p: 40, d: '1 小时', t: '美食' },
       { n: 'E Hayes 五金店 / 世界最快的印第安摩托', p: 0, d: '45 分钟', t: '文化' },
     ] },
-  art: { name: '亚瑟隘口', en: "Arthur's Pass", lat: -42.9420, lng: 171.5620, stay: 0,
+  art: { name: '亚瑟隘口', en: "Arthur's Pass", lat: -42.9420, lng: 171.5620, stay: [0, 0],
     intro: '穿越南阿尔卑斯山的高山隘口，可见啄羊鹦鹉 Kea。',
     acts: [
       { n: '魔鬼酒杯瀑布 Devil’s Punchbowl', p: 0, d: '1 小时', t: '徒步' },
       { n: '城堡山巨石阵 Castle Hill（途经）', p: 0, d: '45 分钟', t: '打卡' },
       { n: '高山观景火车 TranzAlpine（可替代该段驾车）', p: 189, d: '4.5 小时', t: '观景' },
     ] },
-  gry: { name: '格雷茅斯', en: 'Greymouth', lat: -42.4499, lng: 171.2077, stay: 90,
+  gry: { stars: 'starsOnly', name: '格雷茅斯', en: 'Greymouth', lat: -42.4499, lng: 171.2077, stay: [70, 200],
     intro: '西海岸最大城镇，淘金历史。',
     acts: [
       { n: '淘金镇 Shantytown', p: 39, d: '2 小时', t: '文化' },
       { n: '门泰斯啤酒厂 Monteith’s', p: 35, d: '1 小时', t: '美食' },
     ] },
-  pun: { name: '普纳凯基', en: 'Punakaiki', lat: -42.1080, lng: 171.3360, stay: 120,
+  pun: { name: '普纳凯基', en: 'Punakaiki', lat: -42.1080, lng: 171.3360, stay: [90, 300],
     intro: '千层饼岩与海水喷水洞，涨潮时最壮观。',
     acts: [
       { n: '千层饼岩 Pancake Rocks & Blowholes', p: 0, d: '1 小时', t: '自然' },
       { n: '普拉利特河步道 Pororari River Track', p: 0, d: '1.5 小时', t: '徒步' },
     ] },
-  hok: { name: '霍基蒂卡', en: 'Hokitika', lat: -42.7167, lng: 170.9667, stay: 100,
+  hok: { name: '霍基蒂卡', en: 'Hokitika', lat: -42.7167, lng: 170.9667, stay: [70, 220],
     intro: '新西兰绿玉之乡，蓝绿色峡谷与夕阳海滩。',
     acts: [
       { n: '霍基蒂卡峡谷 Hokitika Gorge', p: 0, d: '1 小时', t: '自然' },
@@ -147,7 +147,7 @@ const PLACES = {
       { n: '亲手雕刻绿玉工作坊', p: 150, d: '4 小时', t: '文化' },
       { n: '萤火虫谷 Glowworm Dell（夜间）', p: 0, d: '20 分钟', t: '自然' },
     ] },
-  fra: { name: '弗朗茨约瑟夫冰川', en: 'Franz Josef', lat: -43.3890, lng: 170.1830, stay: 130,
+  fra: { name: '弗朗茨约瑟夫冰川', en: 'Franz Josef', lat: -43.3890, lng: 170.1830, stay: [90, 300],
     intro: '冰川一直延伸到温带雨林，直升机冰川徒步首选地。',
     acts: [
       { n: '直升机冰川徒步 Heli Hike', p: 549, d: '3–4 小时', t: '刺激' },
@@ -155,18 +155,60 @@ const PLACES = {
       { n: '雨林温泉 Glacier Hot Pools', p: 35, d: '1.5 小时', t: '休闲' },
       { n: '西海岸野生动物中心（看几维鸟）', p: 45, d: '1 小时', t: '野生动物' },
     ] },
-  fox: { name: '福克斯冰川', en: 'Fox Glacier', lat: -43.4640, lng: 170.0170, stay: 120,
+  fox: { stars: 'starsOnly', name: '福克斯冰川', en: 'Fox Glacier', lat: -43.4640, lng: 170.0170, stay: [80, 250],
     intro: '马瑟森湖倒映库克山与塔斯曼山的"镜湖"。',
     acts: [
       { n: '马瑟森湖环湖 Lake Matheson', p: 0, d: '1.5 小时', t: '打卡' },
       { n: '直升机雪地降落观光', p: 345, d: '30 分钟', t: '刺激' },
     ] },
-  haa: { name: '哈斯特', en: 'Haast', lat: -43.8810, lng: 169.0420, stay: 0,
+  haa: { name: '哈斯特', en: 'Haast', lat: -43.8810, lng: 169.0420, stay: [0, 0],
     intro: '哈斯特山口，原始雨林与蓝色冰川池。',
     acts: [
       { n: '蓝池 Blue Pools', p: 0, d: '1 小时', t: '自然' },
       { n: '雷霆溪瀑布 Thunder Creek Falls', p: 0, d: '15 分钟', t: '打卡' },
       { n: '哈斯特河喷射快艇 Waiatoto River Safari', p: 229, d: '2 小时', t: '探险' },
+    ] },
+
+  // ---------- 北岛 ----------
+  akl: { island: 'N', name: '奥克兰', en: 'Auckland', lat: -36.8485, lng: 174.7633, stay: [100, 450],
+    intro: '新西兰最大城市，"千帆之都"，北岛行程起点。',
+    acts: [
+      { n: '天空塔观景台 Sky Tower', p: 37, d: '1 小时', t: '观景' },
+      { n: '伊甸山火山口 Mt Eden', p: 0, d: '1 小时', t: '打卡' },
+      { n: '海港大桥攀爬 Harbour Bridge Climb', p: 165, d: '1.5 小时', t: '刺激' },
+      { n: '激流岛酒庄一日游 Waiheke Island（含渡轮）', p: 60, d: '5–6 小时', t: '美食' },
+    ] },
+  hob: { island: 'N', name: '霍比特村', en: 'Hobbiton (Matamata)', lat: -37.8722, lng: 175.6830, stay: [0, 0],
+    intro: '《指环王》《霍比特人》电影拍摄地，44 个霍比特人洞屋与绿龙酒馆。',
+    acts: [
+      { n: '霍比特村电影拍摄地导览 Hobbiton Movie Set Tour', p: 120, d: '2 小时', t: '电影' },
+      { n: '霍比特村晚宴之旅 Evening Banquet Tour', p: 255, d: '4.5 小时', t: '美食' },
+    ] },
+  rot: { island: 'N', name: '罗托鲁阿', en: 'Rotorua', lat: -38.1368, lng: 176.2497, stay: [80, 400],
+    intro: '地热之城，间歇泉、泥浆池与毛利文化中心。',
+    acts: [
+      { n: '蒂普亚地热谷 + 毛利文化 Te Puia', p: 90, d: '2 小时', t: '文化' },
+      { n: '怀奥塔普地热公园 Wai-O-Tapu', p: 45, d: '1.5 小时', t: '自然' },
+      { n: '波利尼西亚温泉 Polynesian Spa', p: 45, d: '1.5 小时', t: '休闲' },
+      { n: '天空缆车 + 滑车 Skyline Rotorua', p: 70, d: '2 小时', t: '观景' },
+      { n: '红木森林树顶步道 Redwoods Treewalk', p: 40, d: '1 小时', t: '自然' },
+      { n: '塔玛基毛利村晚宴 Tamaki Māori Village', p: 255, d: '3.5 小时', t: '文化' },
+    ] },
+  tau: { island: 'N', name: '陶波', en: 'Taupō', lat: -38.6857, lng: 176.0702, stay: [80, 400],
+    intro: '新西兰最大湖泊陶波湖，胡卡瀑布与汤加里罗火山国家公园门户。',
+    acts: [
+      { n: '胡卡瀑布 Huka Falls', p: 0, d: '30 分钟', t: '打卡' },
+      { n: '胡卡瀑布喷射快艇 Huka Falls Jet', p: 159, d: '1 小时', t: '刺激' },
+      { n: '陶波高空跳伞 Taupō Tandem Skydive', p: 399, d: '3 小时', t: '刺激' },
+      { n: '毛利石刻游船 Māori Rock Carvings Cruise', p: 65, d: '2 小时', t: '文化' },
+      { n: '汤加里罗高山徒步 Tongariro Alpine Crossing', p: 0, d: '7–8 小时', t: '徒步' },
+    ] },
+  wtm: { island: 'N', name: '怀托摩', en: 'Waitomo', lat: -38.2610, lng: 175.1040, stay: [80, 250],
+    intro: '地下溶洞王国，乘小船穿过满天"星河"般的萤火虫洞。',
+    acts: [
+      { n: '怀托摩萤火虫洞参观 Waitomo Glowworm Caves', p: 75, d: '45 分钟', t: '自然' },
+      { n: '鲁阿库里溶洞 Ruakuri Cave', p: 105, d: '1.5 小时', t: '自然' },
+      { n: '黑水漂流 Black Water Rafting', p: 215, d: '3 小时', t: '探险' },
     ] },
 };
 
@@ -178,12 +220,18 @@ const STAR_SERVICE = {
   title: '免费星空 / 极光拍摄服务',
   detail: '在住宿当晚前往附近暗空地点，为客人拍摄星空人像与银河照片，南半球极光（Aurora Australis）出现时一并拍摄。',
   disclaimer: '本服务免费赠送，不作保证：星空与极光能否看到、拍到，取决于当晚天气、云量、月相及太阳活动等自然条件；如遇天气不佳将取消，恕不另行补偿。',
+  // 只拍星空（西线、以及 stars: 'starsOnly' 的地点）
+  titleStars: '免费星空拍摄服务',
+  detailStars: '在住宿当晚前往附近暗空地点，为客人拍摄星空人像与银河照片（仅拍星空）。',
+  disclaimerStars: '本服务免费赠送，不作保证：星空能否看到、拍到，取决于当晚天气、云量及月相等自然条件；如遇天气不佳将取消，恕不另行补偿。',
 };
 
 // 可住宿地点及可选晚数 [最少, 最多]；线路里 nights 为默认晚数，客人可在范围内调整
+// 自由组合时，没有列在这里的地点默认可选 0–2 晚
 const NIGHT_RANGE = {
   chc: [1, 3], tek: [1, 2], twz: [0, 2], wan: [0, 2], zqn: [1, 5],   // 0 = 可选不住
-  dun: [0, 2], oam: [0, 2], fox: [1, 2], gry: [1, 2], kai: [1, 2], aka: [1, 2],
+  dun: [0, 2], oam: [0, 2], fox: [1, 2], gry: [1, 2], kai: [0, 2], aka: [0, 2],
+  akl: [1, 3], rot: [1, 3], tau: [0, 2],
   tea: [0, 1],   // 0 = 不住，米尔福德当天往返皇后镇
 };
 
@@ -200,7 +248,7 @@ const ROUTES = [
     nights: [1, 1, 2, 1],
     legs:   [210, 100, 225],
     legNotes: ['', '', '穿越中奥塔哥 Central Otago'] },
-  { id: 'west', type: 'main', name: '西线', sub: '冰川雨林 · 越野风光', color: '#1a9c6b',
+  { id: 'west', type: 'main', stars: true, starsOnly: true, name: '西线', sub: '冰川雨林 · 越野风光', color: '#1a9c6b',
     desc: '翻越亚瑟隘口到塔斯曼海岸，一路南下：千层饼岩、绿玉之乡、两大冰川、哈斯特山口，抵达瓦纳卡与皇后镇。',
     stops:  ['chc', 'art', 'gry', 'pun', 'hok', 'fra', 'fox', 'haa', 'wan', 'zqn'],
     nights: [1, 0, 1, 0, 0, 0, 1, 0, 1, 2],
@@ -212,25 +260,31 @@ const ROUTES = [
     nights: [1, 1, 0, 1, 1, 2, 2, 1, 0],
     legs:   [180, 75, 50, 110, 60, 225, 100, 210],
     legNotes: ['', '', '白天游览库克山，晚上回特威泽尔住宿看星空', '途经林迪斯山口 Lindis Pass', '经皇冠山公路 Crown Range', '穿越中奥塔哥 Central Otago', '', ''] },
-  { id: 'milford', type: 'side', fixed: 'zqn', noDeadhead: true,   // 一般接在皇后镇结束的行程后面，不另收空驶费
-    name: '米尔福德峡湾', sub: '皇后镇出发 · 峡湾游船', color: '#0891b2',
-    desc: '从皇后镇出发，可选在蒂阿瑙住一晚（看萤火虫洞，第二天清早进峡湾），也可不住、当天往返；走米尔福德公路进峡湾游船，傍晚返回皇后镇（可选观光飞机飞回）。通常接在皇后镇结束的行程之后，不另收空驶费。',
+  { id: 'north', type: 'north', fixed: 'akl', name: '北岛经典', sub: '地热 · 霍比特村 · 萤火虫', color: '#c2410c',
+    desc: '奥克兰出发环游北岛中部：途经霍比特村电影拍摄地，住罗托鲁阿看地热与毛利文化，陶波湖畔看胡卡瀑布，回程参观怀托摩萤火虫洞。',
+    stops:  ['akl', 'hob', 'rot', 'tau', 'wtm', 'akl'],
+    nights: [1, 0, 2, 1, 0, 0],
+    legs:   [140, 70, 70, 125, 155],
+    legNotes: ['途经马塔马塔 Matamata', '', '', '途经奥托罗昂加 Ōtorohanga', ''] },
+];
+
+// 加选行程：可以和南岛任意经典线路自由组合，插在线路经过枢纽城市（hub）的地方
+const ADDONS = [
+  { id: 'milford', hub: 'zqn', name: '米尔福德峡湾', sub: '从皇后镇往返',
     stops:  ['zqn', 'tea', 'mil', 'zqn'],
     nights: [0, 1, 0, 0],
     legs:   [120, 120, 225],
     legNotes: ['', '米尔福德公路，冬季需带防滑链', '可选择观光飞机返回皇后镇'] },
-  { id: 'akaroa', type: 'side', fixed: 'chc', name: '阿卡罗阿', sub: '基督城出发 · 海豚小镇', color: '#db2777',
-    desc: '基督城出发 1.5 小时，翻过班克斯半岛火山口来到法式小镇阿卡罗阿，出海看世界最小的赫氏海豚，在小镇住宿后返回基督城。',
-    stops:  ['chc', 'aka', 'chc'],
-    nights: [0, 1, 0],
-    legs:   [90, 90],
-    legNotes: ['途经 Hilltop 观景点', ''] },
-  { id: 'kaikoura', type: 'side', fixed: 'chc', name: '凯库拉', sub: '基督城出发 · 观鲸胜地', color: '#a16207',
-    desc: '沿东北海岸 2.5 小时到凯库拉，出海观抹香鲸、与海豚共游、吃海边龙虾，住宿后原路返回基督城。',
+  { id: 'kaikoura', hub: 'chc', name: '凯库拉', sub: '从基督城往返 · 观鲸',
     stops:  ['chc', 'kai', 'chc'],
     nights: [0, 1, 0],
     legs:   [150, 150],
     legNotes: ['沿太平洋海岸公路', '原路返回基督城'] },
+  { id: 'akaroa', hub: 'chc', name: '阿卡罗阿', sub: '从基督城往返 · 海豚小镇',
+    stops:  ['chc', 'aka', 'chc'],
+    nights: [0, 1, 0],
+    legs:   [90, 90],
+    legNotes: ['途经 Hilltop 观景点', ''] },
 ];
 
 // 包车车型（每天价格，NZD）
