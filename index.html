@@ -81,6 +81,11 @@
   .nstep button { border: 0; background: color-mix(in srgb, var(--c) 22%, white); color: var(--c); width: 20px; height: 20px; border-radius: 6px; font-weight: 700; cursor: pointer; padding: 0; line-height: 20px; }
   .nstep button:disabled { opacity: .35; cursor: default; }
   .nrange { display: block; font-size: 10.5px; color: var(--muted); margin-top: 2px; }
+  .dates { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .dates label { display: grid; gap: 3px; font-size: 12px; color: var(--muted); }
+  .dates input { font: inherit; color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; width: 100%; }
+  .dates input:disabled { background: var(--soft); }
+  .sdate { display: inline-block; font-size: 11px; color: var(--c); font-weight: 600; margin-left: 6px; }
   .addons { display: grid; gap: 8px; }
   .addon { display: flex; gap: 10px; align-items: flex-start; border: 1px solid var(--line); border-radius: 10px; padding: 9px 11px; cursor: pointer; }
   .addon.on { border-color: var(--c); background: color-mix(in srgb, var(--c) 8%, white); }
@@ -175,6 +180,7 @@
     header { padding: 14px 16px 6px; }
     .tabs, section { padding-left: 16px; padding-right: 16px; }
     .tabs { position: static; }
+    .dates { grid-template-columns: 1fr 1fr; }
     .seg.mon button { width: 24px; font-size: 11px; }
     .seg.ppl button { width: 28px; }
     .stats { grid-template-columns: repeat(2, 1fr); }
@@ -214,11 +220,11 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://js.hcaptcha.com/1/api.js?render=explicit&hl=zh-CN" async defer></script>
-<script src="data.js?v=202610170048"></script>
-<script src="geo.js?v=202610170048"></script>
+<script src="data.js?v=202610170100"></script>
+<script src="geo.js?v=202610170100"></script>
 <script>
 // 页面版本（由 bump-version.sh 更新）。微信等浏览器会缓存旧页面，打开时和提交前都检查一次，过期就自动刷新
-const PAGE_VERSION = '202610170048';
+const PAGE_VERSION = '202610170100';
 const latestVersion = () => fetch(`version.json?t=${Date.now()}`, { cache: 'no-store' }).then(r => r.json()).then(d => d.v).catch(() => null);
 function reloadTo(v) {
   try { if (sessionStorage.getItem('reloaded') === v) return false; sessionStorage.setItem('reloaded', v); } catch {}
@@ -238,6 +244,11 @@ const hmShort = m => { const h = Math.floor(m / 60), r = m % 60; return h ? `${h
 const geo = (a, b) => GEO[[a, b].sort().join('-')];
 
 const MAX_PEOPLE = 10;
+// 日期：'YYYY-MM-DD' 按本地日期处理
+const parseD = v => { if (!v) return null; const [y, m, d] = v.split('-').map(Number); return new Date(y, m - 1, d); };
+const isoD = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const addD = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+const fmtD = d => `${d.getMonth() + 1}月${d.getDate()}日（周${'日一二三四五六'[d.getDay()]}）`;
 const cars = v => Math.ceil(state.people / v.pax);   // 单一车型：人数超过载客量时按多辆车计算
 
 // 混搭车型：穷举各车型数量，找出能坐下所有人的每天最低总价（同价时车辆更少优先）
@@ -275,7 +286,7 @@ const fleetPrice = f => VEHICLES.reduce((s, v) => s + vprice(v) * (f[v.id] || 0)
 const fleetLabel = f => VEHICLES.filter(v => f[v.id]).map(v => `${v.name}${f[v.id] > 1 ? ` × ${f[v.id]} 辆` : ''}`).join(' + ');
 const fleet = () => state.vehicle === 'auto' ? cheapestFleet() : { [state.vehicle]: cars(VEHICLES.find(v => v.id === state.vehicle)) };
 const nightKey = (r, id) => r.id + ':' + id;
-const state = { skip: {}, airport: {}, addons: {}, custom: { island: 'S', stops: [] }, nightSel: {}, month: new Date().getMonth() + 1, start: 'chc', route: 'central', people: 2, vehicle: 'auto', days: null, picks: {}, tourIdx: -1, playing: null };
+const state = { dates: { arrive: '', start: '' }, skip: {}, airport: {}, addons: {}, custom: { island: 'S', stops: [] }, nightSel: {}, month: new Date().getMonth() + 1, start: 'chc', route: 'central', people: 2, vehicle: 'auto', days: null, picks: {}, tourIdx: -1, playing: null };
 
 // 按出发城市调整线路方向：单程线路反向，环线换起点；单独行程固定出发城市
 function orient(r) {
@@ -349,6 +360,8 @@ const nightRange = (r, id) => r.fixedNights ? null : r.type === 'custom' && CUST
 
 // 客人选择的住宿晚数（只对默认要住宿、且在 NIGHT_RANGE 里的地点生效）
 function withNights(r) {
+  // 南岛经典线路：起点城市不住，抵达当天接机后直接开往第二站，第一晚住第二站
+  if (r.type === 'main') r = { ...r, nights: r.nights.map((n, i) => i === 0 ? 0 : n) };
   return { ...r, baseNights: r.nights, nights: r.nights.map((n, i) => {
     const sel = state.nightSel[nightKey(r, r.stops[i])];
     return n > 0 && nightRange(r, r.stops[i]) && sel != null ? sel : n;
@@ -571,7 +584,6 @@ const FORM_FIELDS = [
   { k: 'name', label: '您的姓名 *', required: true },
   { k: 'contact', label: '微信号 / 电话 *', required: true },
   { k: 'email', label: '邮箱（选填）', type: 'email' },
-  { k: 'date', label: '计划出发日期', type: 'date' },
   { k: 'note', label: '其他需求（选填）', area: true },
 ];
 state.form = {};
@@ -605,7 +617,6 @@ function inquiryHtml(r) {
 function quoteText(f) {
   const lines = [`【${QUOTE_FORM.subject}】`, `客人姓名：${f.name}`, `微信/电话：${f.contact}`];
   if (f.email) lines.push(`邮箱：${f.email}`);
-  if (f.date) lines.push(`计划出发日期：${f.date}`);
   if (f.note) lines.push(`其他需求：${f.note}`);
   Object.entries(state.quote).forEach(([k, v]) => lines.push(`${k}：${String(v).replace(/\n/g, '；')}`));
   return lines.join('\n');
@@ -668,7 +679,7 @@ function bindInquiry() {
     btn.disabled = true; btn.textContent = '提交中…'; msg.textContent = ''; $('#qfallback').hidden = true;
     const subject = `${QUOTE_FORM.subject}｜${f.name}｜${state.quote['线路']}｜${state.month}月｜${state.quote['出行人数']}`;
     const fields = {
-      '客人姓名': f.name, '微信/电话': f.contact, '客人邮箱': f.email || '未填写', '计划出发日期': f.date || '未填写', '其他需求': f.note || '无',
+      '客人姓名': f.name, '微信/电话': f.contact, '客人邮箱': f.email || '未填写', '其他需求': f.note || '无',
       ...state.quote,
     };
     const errors = [];
@@ -710,6 +721,28 @@ function airportLegs(r, days, fl) {
   });
   return out;
 }
+function tripDates(r) {
+  const arrive = parseD(state.dates.arrive), start = parseD(state.dates.start) || arrive;
+  if (!start) return null;
+  const nights = r.nights.reduce((a, b) => a + b, 0);
+  // 每站的到达日期：包车出发日 + 之前累计的晚数
+  let acc = 0;
+  const stopDates = r.stops.map((_, i) => { const d = addD(start, acc); acc += r.nights[i]; return d; });
+  return { arrive: arrive || start, start, leave: addD(start, nights), stopDates };
+}
+function datesHtml(r, td) {
+  const city = PLACES[r.stops[0]].name, end = PLACES[r.stops[r.stops.length - 1]].name;
+  return `<section><h2>📅 行程日期</h2>
+    <div class="dates">
+      <label>抵达${city}日期<input type="date" data-date="arrive" value="${state.dates.arrive}"></label>
+      <label>包车出发日期<input type="date" data-date="start" value="${state.dates.start}"></label>
+      <label>离开${end}日期<input type="date" value="${td ? isoD(td.leave) : ''}" disabled></label>
+    </div>
+    <p class="fine" style="margin:6px 0 0">${td
+      ? `抵达 ${fmtD(td.arrive)} · 包车出发 ${fmtD(td.start)} · 离开 ${fmtD(td.leave)}${td.arrive < td.start ? `；抵达当天只接机，抵达至包车出发之间的住宿不在报价内` : ''}。离开日期按包车出发日期加住宿晚数自动计算。`
+      : `填写抵达日期后，系统会按住宿晚数自动排出每站日期和离开日期，并按出发月份计算淡旺季价格。`}</p></section>`;
+}
+
 function airportHtml(r, legs, days) {
   if (!legs.length) return '';
   return `<section><h2>✈️ 接送机</h2><div class="addons">${legs.map(a => `
@@ -776,6 +809,14 @@ function bindBuilder() {
     const sel = state.airport[state.route] = state.airport[state.route] || {};
     sel[cb.dataset.air] = cb.checked; const y = $('aside').scrollTop; render(); $('aside').scrollTop = y;
   });
+  document.querySelectorAll('[data-date]').forEach(inp => inp.onchange = () => {
+    const d = state.dates;
+    d[inp.dataset.date] = inp.value;
+    if (inp.dataset.date === 'arrive' && inp.value && (!d.start || d.start < inp.value)) d.start = inp.value;
+    if (inp.dataset.date === 'start' && inp.value && d.arrive && inp.value < d.arrive) d.arrive = inp.value;
+    if (d.start) state.month = parseD(d.start).getMonth() + 1;
+    const y = $('aside').scrollTop; render(); $('aside').scrollTop = y;
+  });
   document.querySelectorAll('[data-optstop]').forEach(cb => cb.onchange = () => {
     const sk = state.skip[state.route] = state.skip[state.route] || {};
     sk[cb.dataset.optstop] = !cb.checked; redo();
@@ -794,6 +835,7 @@ function renderRoute(r) {
   }
   const s = routeStats(r);
   const days = state.days ?? charterDays(r, s);
+  const td = tripDates(r);
   // 北岛套餐默认含霍比特村导览、萤火虫洞门票；选择不去该途经点时自动不计
   const picks = state.picks[r.id] = state.picks[r.id] || Object.fromEntries((r.optionalStops || []).map(id => [id + ':0', true]));
 
@@ -803,7 +845,7 @@ function renderRoute(r) {
     const repeat = r.stops.indexOf(id) < i;
     tl += `<div class="stop" data-i="${i}" style="--c:${r.color}">
       <div class="stop-h"><div class="num">${i + 1}</div>
-        <div><div class="nm">${p.name}</div><div class="en">${p.en}</div></div>
+        <div><div class="nm">${p.name}${td ? `<span class="sdate">${fmtD(td.stopDates[i])}</span>` : ''}</div><div class="en">${p.en}</div></div>
         <div class="tag">${r.baseNights[i] && nightRange(r, id) ? (n === 0
           ? `<span class="pill">不住 <span class="nstep"><button data-nid="${id}" data-dn="1">+</button></span></span><span class="nrange">可选 ${nightRange(r, id)[0]}–${nightRange(r, id)[1]} 晚，0 = 不住宿</span>`
           : `<span class="pill stay">住 <span class="nstep"><button data-nid="${id}" data-dn="-1" ${n <= nightRange(r, id)[0] ? 'disabled' : ''}>−</button> ${n} <button data-nid="${id}" data-dn="1" ${n >= nightRange(r, id)[1] ? 'disabled' : ''}>+</button></span> 晚 · ${mr(stayRate(id))}/人/晚</span><span class="nrange">可选 ${nightRange(r, id)[0]}–${nightRange(r, id)[1]} 晚</span>`
@@ -859,6 +901,7 @@ function renderRoute(r) {
     </section>
     ${r.type === 'custom' ? builderHtml(r) : addonHtml(r)}${optionalHtml(r)}
     <section><h2>📍 途经地与每段车程</h2><p class="fine" style="margin:-4px 0 10px">勾选活动可加入下方报价 · 点击站点或车程在地图上定位</p><div class="timeline">${tl}</div></section>
+    ${datesHtml(r, td)}
     ${airportHtml(r, air, days)}
     ${vehicleHtml(days)}
     <section style="border-bottom:0">
@@ -883,6 +926,9 @@ function renderRoute(r) {
     '加选行程': r.addonNames && r.addonNames.length ? r.addonNames.join('、') : '无',
     '路线': r.stops.map(id => PLACES[id].name).join(' → '),
     '住宿安排': stayPlan(r).map(x => `${x.name}：${x.n ? `${x.n} 晚（${mr(x.rate)}/人/晚）` : '不住'}`).join('\n'),
+    '抵达日期': td ? `${fmtD(td.arrive)}（${PLACES[r.stops[0]].name}）` : '未填写',
+    '包车出发日期': td ? fmtD(td.start) : '未填写',
+    '离开日期': td ? `${fmtD(td.leave)}（${PLACES[r.stops[r.stops.length - 1]].name}）` : '未填写',
     '出行月份': `${state.month} 月（${seasonName()}：${season().why}）`,
     '出行人数': `${state.people} 人`,
     '包车天数': `${days} 天（行程 ${s.days}天${s.nights}晚${freeDayNote(r) ? `，${freeDayNote(r)}，不算包车日` : ''}）`,
