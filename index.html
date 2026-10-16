@@ -86,6 +86,25 @@
   .dates input { font: inherit; color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; width: 100%; }
   .dates input:disabled { background: var(--soft); }
   .sdate { display: inline-block; font-size: 11px; color: var(--c); font-weight: 600; margin-left: 6px; }
+  .tab.incart:not(.on) { border-color: var(--c); box-shadow: inset 0 0 0 1px var(--c); }
+  .tab.incart:not(.on) b { color: var(--c); }
+  .cartbtn button { width: 100%; margin-top: 12px; border: 2px solid var(--c); background: var(--c); color: #fff; border-radius: 10px; padding: 10px; font: inherit; font-weight: 700; cursor: pointer; }
+  .cartbtn button small { display: block; font-weight: 400; font-size: 11px; opacity: .9; }
+  .cartbtn button.added { background: color-mix(in srgb, var(--c) 10%, white); color: var(--c); }
+  .cart { margin-top: 12px; border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; background: var(--panel); }
+  .cart.empty { font-size: 13px; color: var(--muted); background: var(--soft); border: 0; }
+  .cart h3 { margin: 0 0 8px; font-size: 15px; }
+  .cart .citem { display: flex; gap: 10px; justify-content: space-between; align-items: flex-start; padding: 8px 0 8px 10px; border-left: 4px solid var(--c); margin-bottom: 6px; background: var(--soft); border-radius: 6px; }
+  .cart .citem small { display: block; color: var(--muted); font-size: 12px; }
+  .cart .cact { font-size: 12px; }
+  .cart .camt { font-weight: 700; white-space: nowrap; padding-right: 10px; font-variant-numeric: tabular-nums; }
+  .cart .ln { display: flex; justify-content: space-between; padding: 3px 0; font-variant-numeric: tabular-nums; }
+  .cart .ln.tot { border-top: 1px solid var(--line); margin-top: 6px; padding-top: 8px; font-size: 17px; font-weight: 700; }
+  .chk { border-radius: 10px; padding: 10px 12px; font-size: 13px; font-weight: 600; line-height: 1.5; margin: 6px 0; }
+  .chk.ok { background: #e7f6ef; color: #11704d; }
+  .chk.warn { background: #fff4e0; color: #9a5800; border: 2px solid #f0a020; }
+  .chk.err { background: #fde8e8; color: #b42318; border: 2px solid #e5484d; }
+  .chk.info { background: var(--soft); color: var(--muted); font-weight: 500; }
   .addons { display: grid; gap: 8px; }
   .addon { display: flex; gap: 10px; align-items: flex-start; border: 1px solid var(--line); border-radius: 10px; padding: 9px 11px; cursor: pointer; }
   .addon.on { border-color: var(--c); background: color-mix(in srgb, var(--c) 8%, white); }
@@ -223,11 +242,11 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://js.hcaptcha.com/1/api.js?render=explicit&hl=zh-CN" async defer></script>
-<script src="data.js?v=202610170154"></script>
-<script src="geo.js?v=202610170154"></script>
+<script src="data.js?v=202610170201"></script>
+<script src="geo.js?v=202610170201"></script>
 <script>
 // 页面版本（由 bump-version.sh 更新）。微信等浏览器会缓存旧页面，打开时和提交前都检查一次，过期就自动刷新
-const PAGE_VERSION = '202610170154';
+const PAGE_VERSION = '202610170201';
 const latestVersion = () => fetch(`version.json?t=${Date.now()}`, { cache: 'no-store' }).then(r => r.json()).then(d => d.v).catch(() => null);
 function reloadTo(v) {
   try { if (sessionStorage.getItem('reloaded') === v) return false; sessionStorage.setItem('reloaded', v); } catch {}
@@ -289,7 +308,7 @@ const fleetPrice = f => VEHICLES.reduce((s, v) => s + vprice(v) * (f[v.id] || 0)
 const fleetLabel = f => VEHICLES.filter(v => f[v.id]).map(v => `${v.name}${f[v.id] > 1 ? ` × ${f[v.id]} 辆` : ''}`).join(' + ');
 const fleet = () => state.vehicle === 'auto' ? cheapestFleet() : { [state.vehicle]: cars(VEHICLES.find(v => v.id === state.vehicle)) };
 const nightKey = (r, id) => r.id + ':' + id;
-const state = { preCar: {}, dates: {}, skip: {}, airport: {}, addons: {}, custom: { island: 'S', stops: [] }, nightSel: {}, month: new Date().getMonth() + 1, start: 'chc', route: 'central', people: 2, vehicle: 'auto', days: null, picks: {}, tourIdx: -1, playing: null };
+const state = { cart: { N: null, S: null }, preCar: {}, dates: {}, skip: {}, airport: {}, addons: {}, custom: { island: 'S', stops: [] }, nightSel: {}, month: new Date().getMonth() + 1, start: 'chc', route: 'central', people: 2, vehicle: 'auto', days: null, picks: {}, tourIdx: -1, playing: null };
 
 // 按出发城市调整线路方向：单程线路反向，环线换起点；单独行程固定出发城市
 function orient(r) {
@@ -520,7 +539,8 @@ function focusStop(i, zoom = 10) {
 
 /* ---------- 侧边栏 ---------- */
 function renderTabs() {
-  const tab = t => `<button class="tab ${state.route === t.id ? 'on' : ''}" style="--c:${t.color}" data-id="${t.id}"><b>${t.tab || t.name}</b><small>${t.sub.split(' · ')[0]}</small></button>`;
+  const inCart = id => Object.values(state.cart).includes(id);
+  const tab = t => `<button class="tab ${state.route === t.id ? 'on' : ''} ${inCart(t.id) ? 'incart' : ''}" style="--c:${t.color}" data-id="${t.id}"><b>${inCart(t.id) ? '✓ ' : ''}${t.tab || t.name}</b><small>${t.sub.split(' · ')[0]}</small></button>`;
   const r = active();
   const startHtml = r && r.type === 'custom'
     ? `出发 <span class="fixed">按您点选的顺序</span>`
@@ -921,6 +941,7 @@ function renderRoute(r) {
     return;
   }
   const q = quoteFor(r);
+  const cd = cartData();
   const { s, days, td, picks, picked, actPP, fl, car, stay, act, dhLegs, dh, air, airOn, airFee, pre, total, starStops, starNights, allStarsOnly, svcName, banner } = q;
   let tl = '';
   r.stops.forEach((id, i) => {
@@ -983,10 +1004,13 @@ function renderRoute(r) {
         <div class="ln"><span>人均</span><span>${mr(rmul(total, 1 / state.people))}</span></div>
       </div>
       <p class="fine">* 所有价格为新西兰元 (NZD) ${state.month} 月${seasonName()}参考价${season().peak ? '' : `（淡季住宿按 ${Math.round(SEASON.offStayFactor * 100) / 10} 折计算）`}，住宿按两人一间均摊，给出常规（3–4 星）到高端（精品/豪华）的价格区间，因此总价为区间；活动价格以各运营商官网为准；餐饮、机票、保险未计入。${starNights ? `${svcName}为免费赠送服务，不作保证，视天气状况而定。` : ''}</p>
-      ${inquiryHtml(r, pre)}
+      ${addBtnHtml(r)}
+      ${cartHtml(cd)}
+      ${inquiryHtml(r, pre, cd.segs.length ? cd.segs.map((x, i) => staySumHtml(x, cd.qs[i].pre, cd.segs.length > 1 ? ISL[islandOf(x)] + ' · ' : '')).join('') : undefined)}
     </section>`;
 
-  state.quote = q.fields;
+  state.quote = cd.segs.length ? cartFields(cd) : q.fields;
+  bindCart();
 
   bindInquiry();
   bindBuilder();
@@ -995,6 +1019,69 @@ function renderRoute(r) {
   document.querySelectorAll('.leg').forEach(e => e.onclick = () => { stopTour(); focusLeg(+e.dataset.i); });
   document.querySelectorAll('[data-k]').forEach(c => c.onchange = () => { picks[c.dataset.k] = c.checked; const y = $('aside').scrollTop; render(); $('aside').scrollTop = y; });
   bindVehicle();
+}
+
+/* ---------- 已选行程：北岛、南岛各选一条，合并报价 ---------- */
+const islandOf = r => PLACES[r.stops[0]] && PLACES[r.stops[0]].island === 'N' ? 'N' : 'S';
+const ISL = { N: '北岛', S: '南岛' };
+const segName = r => `${r.name.replace(/^北岛 · /, '')}${r.type === 'custom' ? '' : ' · ' + r.sub.split(' · ')[0]}`;
+const cartRoutes = () => ['N', 'S'].map(k => state.cart[k] && OR.find(r => r.id === state.cart[k])).filter(r => r && r.stops.length > 1);
+function addBtnHtml(r) {
+  const k = islandOf(r), mine = state.cart[k] === r.id, other = state.cart[k] && !mine && OR.find(x => x.id === state.cart[k]);
+  return `<div class="cartbtn" style="--c:${r.color}">${mine
+    ? `<button class="added" data-cart-rm="${k}">✓ 已加入报价（${ISL[k]}）· 点击取消</button>`
+    : `<button data-cart-add="${r.id}">＋ 加入报价（${ISL[k]}）${other ? `<small>将替换已选的「${segName(other)}」</small>` : ''}</button>`}</div>`;
+}
+// 两段日期检查：比较先出发那段的离开日和后一段的抵达日
+function cartCheck(segs) {
+  if (segs.length < 2) return null;
+  const tds = segs.map(r => tripDates(r));
+  if (tds.some(t => !t)) return { level: 'info', msg: `请在${segs.filter((r, i) => !tds[i]).map(r => `「${r.name}」`).join('和')}里填写行程日期，系统会检查两段日期是否衔接。` };
+  const [i, j] = tds[0].arrive <= tds[1].arrive ? [0, 1] : [1, 0];
+  const A = segs[i], B = segs[j], ta = tds[i], tb = tds[j];
+  const lv = `${ISL[islandOf(A)]} ${fmtD(ta.leave)} 离开${PLACES[A.stops[A.stops.length - 1]].name}`, ar = `${ISL[islandOf(B)]} ${fmtD(tb.arrive)} 抵达${PLACES[B.stops[0]].name}`;
+  const gap = Math.round((tb.arrive - ta.leave) / 864e5);
+  if (gap < 0) return { level: 'err', msg: `日期重叠 ${-gap} 天：${lv}，但${ar}，两段行程撞期。请把${ISL[islandOf(B)]}的抵达日期改到 ${fmtD(ta.leave)} 或之后，或减少${ISL[islandOf(A)]}的住宿晚数。` };
+  if (gap === 0) return { level: 'ok', msg: `日期衔接：${lv}，当天${ar}（跨岛航班机票不含在报价内）。` };
+  return { level: 'warn', msg: `中间多出 ${gap} 天未安排：${lv}，${ar}，中间 ${gap} 晚没有住宿和行程。请调整日期或增加住宿晚数。` };
+}
+function cartData() {
+  const segs = cartRoutes();
+  const qs = segs.map(r => quoteFor(r));
+  return { segs, qs, chk: cartCheck(segs), total: radd(...qs.map(q => q.total)) };
+}
+function cartHtml(cd) {
+  const { segs, qs, chk, total } = cd;
+  if (!segs.length) return `<div class="cart empty">🧾 <b>已选行程</b>：还没有加入任何行程。在北岛或南岛线路里调整好后，点「＋ 加入报价」，可北岛、南岛各选一条合并报价。</div>`;
+  return `<div class="cart"><h3>🧾 已选行程（${segs.length} 段）</h3>
+    ${segs.map((r, i) => { const q = qs[i], td = q.td; return `<div class="citem" style="--c:${r.color}">
+      <div><b>✓ ${ISL[islandOf(r)]} · ${segName(r)}</b>${r.addonNames && r.addonNames.length ? ` + ${r.addonNames.join(' + ')}` : ''}
+        <small>${q.s.days}天${q.s.nights}晚${q.pre ? ` + 抵达后住 ${q.pre.nights} 晚` : ''} · ${td ? `${fmtD(td.arrive)} 抵达 – ${fmtD(td.leave)} 离开` : '未填日期'} · ${q.month}月${q.seasonName}</small>
+        <span class="cact"><a href="#" data-goto="${r.id}">查看 / 修改</a> · <a href="#" data-cart-rm="${islandOf(r)}">移除</a></span></div>
+      <span class="camt">${mr(q.total)}</span></div>`; }).join('')}
+    ${chk ? `<div class="chk ${chk.level}">${{ ok: '✅', warn: '⚠️', err: '⛔', info: '📅' }[chk.level]} ${chk.msg}</div>` : `<p class="fine" style="margin:6px 0">可再加入${ISL[segs[0] && islandOf(segs[0]) === 'N' ? 'S' : 'N']}行程，合并成一份报价。</p>`}
+    <div class="ln tot"><span>${segs.length > 1 ? '两段合计' : '合计'}（NZD）</span><span>${mr(total)}</span></div>
+    <div class="ln"><span>人均</span><span>${mr(rmul(total, 1 / state.people))}</span></div>
+  </div>`;
+}
+function cartFields(cd) {
+  const { segs, qs, chk, total } = cd;
+  if (segs.length === 1) return qs[0].fields;
+  const pref = (tag, f) => Object.fromEntries(Object.entries(f).map(([k, v]) => [`${tag}${k}`, v]));
+  return {
+    '线路': segs.map(r => `${ISL[islandOf(r)]}：${segName(r)}`).join(' + '),
+    '出行人数': `${state.people} 人`,
+    '日期检查': chk ? chk.msg : '—',
+    ...Object.assign({}, ...segs.map((r, i) => pref(`【${ISL[islandOf(r)]}】`, qs[i].fields))),
+    '合计 (NZD)': mr(total),
+    '人均 (NZD)': mr(rmul(total, 1 / state.people)),
+  };
+}
+function bindCart() {
+  const redo = () => { const y = $('aside').scrollTop; render(); $('aside').scrollTop = y; };
+  document.querySelectorAll('[data-cart-add]').forEach(b => b.onclick = () => { const r = OR.find(x => x.id === b.dataset.cartAdd); state.cart[islandOf(r)] = r.id; redo(); });
+  document.querySelectorAll('[data-cart-rm]').forEach(b => b.onclick = e => { e.preventDefault(); state.cart[b.dataset.cartRm] = null; redo(); });
+  document.querySelectorAll('[data-goto]').forEach(a => a.onclick = e => { e.preventDefault(); setRoute(a.dataset.goto); });
 }
 
 function renderAll() {
@@ -1021,8 +1108,12 @@ function renderAll() {
       <h2>途经地一览</h2>
       ${list('main')}${list('north')}
     </section>
-    ${vehicleHtml(0)}`;
+    ${vehicleHtml(0)}
+    <section style="border-bottom:0">${(() => { const cd = cartData(); state.quote = cd.segs.length ? cartFields(cd) : null;
+      return cartHtml(cd) + (cd.segs.length ? inquiryHtml({ color: '#1d2327' }, null, cd.segs.map((x, i) => staySumHtml(x, cd.qs[i].pre, cd.segs.length > 1 ? ISL[islandOf(x)] + ' · ' : '')).join('')) : ''); })()}</section>`;
   bindVehicle();
+  bindCart();
+  bindInquiry();
 }
 
 function render() {
