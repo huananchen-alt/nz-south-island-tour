@@ -212,11 +212,11 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://js.hcaptcha.com/1/api.js?render=explicit&hl=zh-CN" async defer></script>
-<script src="data.js?v=202610170010"></script>
-<script src="geo.js?v=202610170010"></script>
+<script src="data.js?v=202610170016"></script>
+<script src="geo.js?v=202610170016"></script>
 <script>
 // 页面版本（由 bump-version.sh 更新）。微信等浏览器会缓存旧页面，打开时和提交前都检查一次，过期就自动刷新
-const PAGE_VERSION = '202610170010';
+const PAGE_VERSION = '202610170016';
 const latestVersion = () => fetch(`version.json?t=${Date.now()}`, { cache: 'no-store' }).then(r => r.json()).then(d => d.v).catch(() => null);
 function reloadTo(v) {
   try { if (sessionStorage.getItem('reloaded') === v) return false; sessionStorage.setItem('reloaded', v); } catch {}
@@ -329,7 +329,7 @@ function customRoute() {
 const buildOR = () => { OR = [...ROUTES.map(r => withNights(withAddons(orient(r)))), withNights(customRoute())]; };
 // 自由组合里只途经、不住宿的地点
 const CUSTOM_PASS = ['hob', 'wtm', 'mil'];
-const nightRange = (r, id) => r.type === 'custom' && CUSTOM_PASS.includes(id) ? null : NIGHT_RANGE[id] || (r.type === 'custom' && PLACES[id].stay[1] > 0 ? [0, 2] : null);
+const nightRange = (r, id) => r.fixedNights ? null : r.type === 'custom' && CUSTOM_PASS.includes(id) ? null : NIGHT_RANGE[id] || (r.type === 'custom' && PLACES[id].stay[1] > 0 ? [0, 2] : null);
 
 // 客人选择的住宿晚数（只对默认要住宿、且在 NIGHT_RANGE 里的地点生效）
 function withNights(r) {
@@ -483,7 +483,7 @@ function focusStop(i, zoom = 10) {
 
 /* ---------- 侧边栏 ---------- */
 function renderTabs() {
-  const tab = t => `<button class="tab ${state.route === t.id ? 'on' : ''}" style="--c:${t.color}" data-id="${t.id}"><b>${t.name}</b><small>${t.sub.split(' · ')[0]}</small></button>`;
+  const tab = t => `<button class="tab ${state.route === t.id ? 'on' : ''}" style="--c:${t.color}" data-id="${t.id}"><b>${t.tab || t.name}</b><small>${t.sub.split(' · ')[0]}</small></button>`;
   const r = active();
   const startHtml = r && r.type === 'custom'
     ? `出发城市 <span class="fixed">按您点选的顺序</span>`
@@ -885,7 +885,7 @@ function renderAll() {
       <table class="cmp">${head}<tbody>${rows('main')}</tbody></table>
     </section>
     <section>
-      <h2>北岛线路</h2>
+      <h2>北岛线路（奥克兰出发）</h2>
       <table class="cmp">${head}<tbody>${rows('north')}</tbody></table>
       <p class="fine">* 按当前选择：${state.month} 月${seasonName()}，${state.people} 人，${fleetLabel(fleet())}（${money(fleetPrice(fleet()))}/天），不含活动。</p>
     </section>
