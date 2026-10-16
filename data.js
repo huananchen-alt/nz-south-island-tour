@@ -332,3 +332,7 @@ const SEASON = {
 // 空驶费：司导和车辆常驻基督城。行程不在基督城开始（需空驶过去）或不在基督城结束（需空驶回来），
 // 每段空驶按每辆车收取 fee
 const DEADHEAD = { base: 'chc', fee: 500 };
+
+// 接送机：行程开始当天接机、结束当天送机（仅奥克兰 / 基督城 / 皇后镇）
+// 包车满 minDays 天免费；不满按每辆车每趟收费
+const AIRPORT = { minDays: 3, fee: { akl: 100, chc: 60, zqn: 60 } };

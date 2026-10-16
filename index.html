@@ -212,11 +212,11 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://js.hcaptcha.com/1/api.js?render=explicit&hl=zh-CN" async defer></script>
-<script src="data.js?v=202610162328"></script>
-<script src="geo.js?v=202610162328"></script>
+<script src="data.js?v=202610162340"></script>
+<script src="geo.js?v=202610162340"></script>
 <script>
 // 页面版本（由 bump-version.sh 更新）。微信等浏览器会缓存旧页面，打开时和提交前都检查一次，过期就自动刷新
-const PAGE_VERSION = '202610162328';
+const PAGE_VERSION = '202610162340';
 const latestVersion = () => fetch(`version.json?t=${Date.now()}`, { cache: 'no-store' }).then(r => r.json()).then(d => d.v).catch(() => null);
 function reloadTo(v) {
   try { if (sessionStorage.getItem('reloaded') === v) return false; sessionStorage.setItem('reloaded', v); } catch {}
@@ -273,7 +273,7 @@ const fleetPrice = f => VEHICLES.reduce((s, v) => s + vprice(v) * (f[v.id] || 0)
 const fleetLabel = f => VEHICLES.filter(v => f[v.id]).map(v => `${v.name}${f[v.id] > 1 ? ` × ${f[v.id]} 辆` : ''}`).join(' + ');
 const fleet = () => state.vehicle === 'auto' ? cheapestFleet() : { [state.vehicle]: cars(VEHICLES.find(v => v.id === state.vehicle)) };
 const nightKey = (r, id) => r.id + ':' + id;
-const state = { addons: {}, custom: { island: 'S', stops: [] }, nightSel: {}, month: new Date().getMonth() + 1, start: 'chc', route: 'central', people: 2, vehicle: 'auto', days: null, picks: {}, tourIdx: -1, playing: null };
+const state = { airport: {}, addons: {}, custom: { island: 'S', stops: [] }, nightSel: {}, month: new Date().getMonth() + 1, start: 'chc', route: 'central', people: 2, vehicle: 'auto', days: null, picks: {}, tourIdx: -1, playing: null };
 
 // 按出发城市调整线路方向：单程线路反向，环线换起点；单独行程固定出发城市
 function orient(r) {
@@ -674,6 +674,23 @@ function bindInquiry() {
   };
 }
 
+// 接送机：起点 / 终点是有机场服务的城市时可选
+function airportLegs(r, days, fl) {
+  const sel = state.airport[r.id] || {}, n = fleetCount(fl), free = days >= AIRPORT.minDays, out = [];
+  [['pickup', '接机', r.stops[0], '行程开始当天'], ['dropoff', '送机', r.stops[r.stops.length - 1], '行程结束当天']].forEach(([k, label, city, when]) => {
+    if (!(city in AIRPORT.fee)) return;
+    out.push({ k, label, city, when, on: !!sel[k], fee: free ? 0 : AIRPORT.fee[city] * n, unit: AIRPORT.fee[city] });
+  });
+  return out;
+}
+function airportHtml(r, legs, days) {
+  if (!legs.length) return '';
+  return `<section><h2>✈️ 接送机</h2><div class="addons">${legs.map(a => `
+    <label class="addon ${a.on ? 'on' : ''}" style="--c:${r.color}"><input type="checkbox" data-air="${a.k}" ${a.on ? 'checked' : ''}>
+      <span><b>${a.label} · ${PLACES[a.city].name}机场</b>（${a.when}）<small>${a.fee ? `${money(a.unit)}/辆 × ${a.fee / a.unit} 辆 = ${money(a.fee)}` : `包车满 ${AIRPORT.minDays} 天，免费`}</small></span></label>`).join('')}
+  </div><p class="fine" style="margin:8px 0 0">包车满 ${AIRPORT.minDays} 天接送机免费；不满 ${AIRPORT.minDays} 天按每辆车每趟收费：${Object.entries(AIRPORT.fee).map(([c, f]) => `${PLACES[c].name} ${money(f)}`).join('、')}。当前包车 ${days} 天。</p></section>`;
+}
+
 function addonHtml(r) {
   if (r.type !== 'main') return '';
   const on = state.addons[r.id] || {};
@@ -707,6 +724,10 @@ function bindBuilder() {
   document.querySelectorAll('[data-cmove]').forEach(b => b.onclick = () => {
     const i = +b.dataset.cmove, j = i + +b.dataset.cd;
     [c.stops[i], c.stops[j]] = [c.stops[j], c.stops[i]]; redo();
+  });
+  document.querySelectorAll('[data-air]').forEach(cb => cb.onchange = () => {
+    const sel = state.airport[state.route] = state.airport[state.route] || {};
+    sel[cb.dataset.air] = cb.checked; const y = $('aside').scrollTop; render(); $('aside').scrollTop = y;
   });
   document.querySelectorAll('[data-addon]').forEach(cb => cb.onchange = () => {
     const on = state.addons[state.route] = state.addons[state.route] || {};
@@ -758,7 +779,8 @@ function renderRoute(r) {
   }, 0);
   const fl = fleet(), car = fleetPrice(fl) * days, stay = rmul(s.stay, state.people), act = actPP * state.people;
   const dhLegs = deadheadLegs(r), dh = deadheadFee(r, fl);
-  const total = radd(car, dh, stay, act);
+  const air = airportLegs(r, days, fl), airOn = air.filter(a => a.on), airFee = airOn.reduce((x, a) => x + a.fee, 0);
+  const total = radd(car, dh, airFee, stay, act);
 
   const starStops = r.stops.filter((id, i, a) => a.indexOf(id) === i && hasStars(r, id));
   const starNights = r.stops.reduce((n, id, i) => n + (hasStars(r, id) ? r.nights[i] : 0), 0);
@@ -784,11 +806,13 @@ function renderRoute(r) {
     </section>
     ${r.type === 'custom' ? builderHtml(r) : addonHtml(r)}
     <section><h2>📍 途经地与每段车程</h2><p class="fine" style="margin:-4px 0 10px">勾选活动可加入下方报价 · 点击站点或车程在地图上定位</p><div class="timeline">${tl}</div></section>
+    ${airportHtml(r, air, days)}
     ${vehicleHtml(days)}
     <section style="border-bottom:0">
       <div class="quote">
         <div class="ln"><span>包车 ${fleetLabel(fl)} × ${days} 天</span><span>${money(car)}</span></div>
         ${dh ? `<div class="ln"><span>司导及车辆空驶费 ${dhLegs.length} 段 × ${fleetCount(fl)} 辆 × ${money(DEADHEAD.fee)}<br><small>${dhLegs.join('；')}</small></span><span>${money(dh)}</span></div>` : ''}
+        ${airOn.map(a => `<div class="ln"><span>${a.label}（${PLACES[a.city].name}机场）${a.fee ? '' : ` · 包车满 ${AIRPORT.minDays} 天`}</span><span>${a.fee ? money(a.fee) : '免费'}</span></div>`).join('')}
         <div class="ln"><span>住宿 ${s.nights} 晚 × ${state.people} 人（常规–高端）</span><span>${mr(stay)}</span></div>
         <div class="ln"><span>已选活动 ${money(actPP)}/人 × ${state.people} 人</span><span>${money(act)}</span></div>
         ${starNights ? `<div class="ln"><span>✨ ${svcName}（最多 ${starNights} 晚，视天气）</span><span>免费</span></div>` : ''}
@@ -813,6 +837,7 @@ function renderRoute(r) {
     '已选活动': actList.length ? actList.join('\n') : '未选择',
     '包车费': money(car),
     '空驶费': dh ? `${money(dh)}（${dhLegs.join('；')}，${fleetCount(fl)} 辆车）` : (PLACES[r.stops[0]].island === 'N' ? '无（北岛行程）' : '无（基督城出发并返回）'),
+    '接送机': airOn.length ? airOn.map(a => `${a.label}（${PLACES[a.city].name}机场）：${a.fee ? money(a.fee) : '免费'}`).join('；') : '不需要',
     '住宿费': `${mr(stay)}（${s.nights} 晚 × ${state.people} 人，常规–高端）`,
     '活动费': `${money(act)}（${money(actPP)}/人）`,
     '合计 (NZD)': mr(total),
