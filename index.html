@@ -92,6 +92,9 @@
   .cartbtn button small { display: block; font-weight: 400; font-size: 11px; opacity: .9; }
   .cartbtn button.added { background: color-mix(in srgb, var(--c) 10%, white); color: var(--c); }
   .cart { margin-top: 12px; border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; background: var(--panel); }
+  .resets { display: flex; gap: 8px; margin: 8px 0; }
+  .resets button { flex: 1; border: 1px solid var(--line); background: var(--panel); border-radius: 8px; padding: 6px; font: inherit; font-size: 13px; cursor: pointer; color: var(--ink); }
+  .resets button:hover { border-color: var(--warn); color: var(--warn); }
   .cart.empty { font-size: 13px; color: var(--muted); background: var(--soft); border: 0; }
   .cart h3 { margin: 0 0 8px; font-size: 15px; }
   .cart .citem { display: flex; gap: 10px; justify-content: space-between; align-items: flex-start; padding: 8px 0 8px 10px; border-left: 4px solid var(--c); margin-bottom: 6px; background: var(--soft); border-radius: 6px; }
@@ -242,11 +245,11 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://js.hcaptcha.com/1/api.js?render=explicit&hl=zh-CN" async defer></script>
-<script src="data.js?v=202610170201"></script>
-<script src="geo.js?v=202610170201"></script>
+<script src="data.js?v=202610170217"></script>
+<script src="geo.js?v=202610170217"></script>
 <script>
 // 页面版本（由 bump-version.sh 更新）。微信等浏览器会缓存旧页面，打开时和提交前都检查一次，过期就自动刷新
-const PAGE_VERSION = '202610170201';
+const PAGE_VERSION = '202610170217';
 const latestVersion = () => fetch(`version.json?t=${Date.now()}`, { cache: 'no-store' }).then(r => r.json()).then(d => d.v).catch(() => null);
 function reloadTo(v) {
   try { if (sessionStorage.getItem('reloaded') === v) return false; sessionStorage.setItem('reloaded', v); } catch {}
@@ -1050,10 +1053,21 @@ function cartData() {
   const qs = segs.map(r => quoteFor(r));
   return { segs, qs, chk: cartCheck(segs), total: radd(...qs.map(q => q.total)) };
 }
+const resetBtns = `<div class="resets"><button data-reset="N">↺ 重置北岛</button><button data-reset="S">↺ 重置南岛</button></div>`;
+// 重置某个岛：清掉已选行程，以及该岛所有线路上调整过的晚数、活动、加选、途经点、接送机、日期
+function resetIsland(k) {
+  const ids = OR.filter(r => r.type === 'custom' ? state.custom.island === k : islandOf(r) === k).map(r => r.id);
+  state.cart[k] = null;
+  ids.forEach(id => { ['picks', 'addons', 'skip', 'airport', 'dates', 'preCar'].forEach(f => delete state[f][id]); });
+  Object.keys(state.nightSel).forEach(key => { if (ids.includes(key.split(':')[0])) delete state.nightSel[key]; });
+  if (state.custom.island === k) state.custom.stops = [];
+  state.days = null;
+  buildLayers();
+}
 function cartHtml(cd) {
   const { segs, qs, chk, total } = cd;
-  if (!segs.length) return `<div class="cart empty">🧾 <b>已选行程</b>：还没有加入任何行程。在北岛或南岛线路里调整好后，点「＋ 加入报价」，可北岛、南岛各选一条合并报价。</div>`;
-  return `<div class="cart"><h3>🧾 已选行程（${segs.length} 段）</h3>
+  if (!segs.length) return `<div class="cart empty">🧾 <b>已选行程</b>：还没有加入任何行程。在北岛或南岛线路里调整好后，点「＋ 加入报价」，可北岛、南岛各选一条合并报价。${resetBtns}</div>`;
+  return `<div class="cart"><h3>🧾 已选行程（${segs.length} 段）</h3>${resetBtns}
     ${segs.map((r, i) => { const q = qs[i], td = q.td; return `<div class="citem" style="--c:${r.color}">
       <div><b>✓ ${ISL[islandOf(r)]} · ${segName(r)}</b>${r.addonNames && r.addonNames.length ? ` + ${r.addonNames.join(' + ')}` : ''}
         <small>${q.s.days}天${q.s.nights}晚${q.pre ? ` + 抵达后住 ${q.pre.nights} 晚` : ''} · ${td ? `${fmtD(td.arrive)} 抵达 – ${fmtD(td.leave)} 离开` : '未填日期'} · ${q.month}月${q.seasonName}</small>
@@ -1079,6 +1093,11 @@ function cartFields(cd) {
 }
 function bindCart() {
   const redo = () => { const y = $('aside').scrollTop; render(); $('aside').scrollTop = y; };
+  document.querySelectorAll('[data-reset]').forEach(b => b.onclick = () => {
+    const k = b.dataset.reset;
+    if (!confirm(`确定重置${ISL[k]}吗？会清除${ISL[k]}已加入的行程，以及在${ISL[k]}线路里调整过的住宿晚数、活动、加选、接送机和日期。`)) return;
+    resetIsland(k); const y = $('aside').scrollTop; render(); drawActive(); $('aside').scrollTop = y;
+  });
   document.querySelectorAll('[data-cart-add]').forEach(b => b.onclick = () => { const r = OR.find(x => x.id === b.dataset.cartAdd); state.cart[islandOf(r)] = r.id; redo(); });
   document.querySelectorAll('[data-cart-rm]').forEach(b => b.onclick = e => { e.preventDefault(); state.cart[b.dataset.cartRm] = null; redo(); });
   document.querySelectorAll('[data-goto]').forEach(a => a.onclick = e => { e.preventDefault(); setRoute(a.dataset.goto); });
