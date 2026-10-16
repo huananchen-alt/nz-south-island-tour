@@ -86,14 +86,6 @@
   .dates input { font: inherit; color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; width: 100%; }
   .dates input:disabled { background: var(--soft); }
   .sdate { display: inline-block; font-size: 11px; color: var(--c); font-weight: 600; margin-left: 6px; }
-  .chk { border-radius: 10px; padding: 10px 12px; font-size: 13px; font-weight: 600; line-height: 1.5; }
-  .chk.ok { background: #e7f6ef; color: #11704d; }
-  .chk.warn { background: #fff4e0; color: #9a5800; border: 2px solid #f0a020; }
-  .chk.err { background: #fde8e8; color: #b42318; border: 2px solid #e5484d; }
-  .chk.info { background: var(--soft); color: var(--muted); font-weight: 500; }
-  .segbox .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 8px; }
-  .segbox .chips button { border: 1px solid var(--line); background: var(--soft); border-radius: 99px; padding: 5px 11px; font: inherit; font-size: 12.5px; cursor: pointer; color: var(--ink); }
-  .segbox .chips button.on { background: var(--c); border-color: var(--c); color: #fff; }
   .addons { display: grid; gap: 8px; }
   .addon { display: flex; gap: 10px; align-items: flex-start; border: 1px solid var(--line); border-radius: 10px; padding: 9px 11px; cursor: pointer; }
   .addon.on { border-color: var(--c); background: color-mix(in srgb, var(--c) 8%, white); }
@@ -231,11 +223,11 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://js.hcaptcha.com/1/api.js?render=explicit&hl=zh-CN" async defer></script>
-<script src="data.js?v=202610170141"></script>
-<script src="geo.js?v=202610170141"></script>
+<script src="data.js?v=202610170154"></script>
+<script src="geo.js?v=202610170154"></script>
 <script>
 // 页面版本（由 bump-version.sh 更新）。微信等浏览器会缓存旧页面，打开时和提交前都检查一次，过期就自动刷新
-const PAGE_VERSION = '202610170141';
+const PAGE_VERSION = '202610170154';
 const latestVersion = () => fetch(`version.json?t=${Date.now()}`, { cache: 'no-store' }).then(r => r.json()).then(d => d.v).catch(() => null);
 function reloadTo(v) {
   try { if (sessionStorage.getItem('reloaded') === v) return false; sessionStorage.setItem('reloaded', v); } catch {}
@@ -297,7 +289,7 @@ const fleetPrice = f => VEHICLES.reduce((s, v) => s + vprice(v) * (f[v.id] || 0)
 const fleetLabel = f => VEHICLES.filter(v => f[v.id]).map(v => `${v.name}${f[v.id] > 1 ? ` × ${f[v.id]} 辆` : ''}`).join(' + ');
 const fleet = () => state.vehicle === 'auto' ? cheapestFleet() : { [state.vehicle]: cars(VEHICLES.find(v => v.id === state.vehicle)) };
 const nightKey = (r, id) => r.id + ':' + id;
-const state = { combo: { n: 'north-rot-2d', s: 'central' }, preCar: {}, dates: {}, skip: {}, airport: {}, addons: {}, custom: { island: 'S', stops: [] }, nightSel: {}, month: new Date().getMonth() + 1, start: 'chc', route: 'central', people: 2, vehicle: 'auto', days: null, picks: {}, tourIdx: -1, playing: null };
+const state = { preCar: {}, dates: {}, skip: {}, airport: {}, addons: {}, custom: { island: 'S', stops: [] }, nightSel: {}, month: new Date().getMonth() + 1, start: 'chc', route: 'central', people: 2, vehicle: 'auto', days: null, picks: {}, tourIdx: -1, playing: null };
 
 // 按出发城市调整线路方向：单程线路反向，环线换起点；单独行程固定出发城市
 function orient(r) {
@@ -456,14 +448,13 @@ function popupHtml(id, r) {
 
 function drawActive() {
   activeLayer.clearLayers();
-  const combo = state.route === 'combo' ? comboRoutes().map(x => x.id) : null;
-  const showAll = state.route === 'all' || !!combo;
+  const showAll = state.route === 'all';
   OR.forEach(r => {
-    const on = combo ? combo.includes(r.id) : (showAll && r.type !== 'custom') || r.id === state.route;
+    const on = (showAll && r.type !== 'custom') || r.id === state.route;
     routeLayers[r.id].lines.forEach(l => l.setStyle({ weight: on ? 5 : 3, opacity: on ? .95 : .18, dashArray: on ? null : '4 6' }));
     if (on) routeLayers[r.id].group.eachLayer(l => l.bringToFront());
   });
-  const routes = combo ? OR.filter(r => combo.includes(r.id)) : showAll ? OR.filter(r => r.type !== 'custom') : [active()];
+  const routes = showAll ? OR.filter(r => r.type !== 'custom') : [active()];
   const seen = {};
   routes.forEach(r => {
     // 站点编号（同一地点出现多次时合并编号）
@@ -531,14 +522,12 @@ function focusStop(i, zoom = 10) {
 function renderTabs() {
   const tab = t => `<button class="tab ${state.route === t.id ? 'on' : ''}" style="--c:${t.color}" data-id="${t.id}"><b>${t.tab || t.name}</b><small>${t.sub.split(' · ')[0]}</small></button>`;
   const r = active();
-  const startHtml = state.route === 'combo'
-    ? `出发 <span class="fixed">南岛线路的出发城市在"南岛经典线路"里切换</span>`
-    : r && r.type === 'custom'
+  const startHtml = r && r.type === 'custom'
     ? `出发 <span class="fixed">按您点选的顺序</span>`
     : r && r.fixed
     ? `出发 <span class="fixed">${PLACES[r.fixed].name}（固定）</span>`
     : `出发 <span class="seg">${['chc', 'zqn'].map(c => `<button class="${state.start === c ? 'on' : ''}" data-start="${c}">${PLACES[c].name}</button>`).join('')}</span>`;
-  $('#tabs').innerHTML = `<div class="glabel">全览 · 组合</div>${tab({ id: 'all', name: '全览', sub: '线路对比', color: '#1d2327' })}${tab({ id: 'combo', name: '南北岛组合', sub: '两岛一起报价', color: '#4338ca' })}${tab({ id: 'custom', name: '自由组合', sub: '按顺序自选地点', color: '#0f766e' })}
+  $('#tabs').innerHTML = `<div class="glabel">全览 · 自由组合</div>${tab({ id: 'all', name: '全览', sub: '线路对比', color: '#1d2327' })}${tab({ id: 'custom', name: '自由组合', sub: '按顺序自选地点', color: '#0f766e' })}
     <div class="glabel">北岛（奥克兰出发）</div>${ROUTES.filter(r => r.type === 'north').map(tab).join('')}
     <div class="glabel">南岛经典线路（可加选米尔福德 / 凯库拉 / 阿卡罗阿）</div>${ROUTES.filter(r => r.type === 'main').map(tab).join('')}
     <div class="start">${startHtml}<span class="season"><b style="background:${season().peak ? '#e2780e' : '#1a9c6b'}">${state.month}月·${seasonName()}</b>${season().why}${season().peak ? '' : `，住宿约 ${Math.round(SEASON.offStayFactor * 100) / 10} 折`}</span></div>
@@ -852,7 +841,7 @@ function bindBuilder() {
     d[inp.dataset.date] = inp.value;
     if (inp.dataset.date === 'arrive' && inp.value && (!d.start || d.start < inp.value)) d.start = inp.value;
     if (inp.dataset.date === 'start' && inp.value && d.arrive && inp.value < d.arrive) d.arrive = inp.value;
-    if (d.start && state.route !== 'combo') state.month = parseD(d.start).getMonth() + 1;
+    if (d.start) state.month = parseD(d.start).getMonth() + 1;
     const y = $('aside').scrollTop; render(); $('aside').scrollTop = y;
   });
   document.querySelectorAll('[data-optstop]').forEach(cb => cb.onchange = () => {
@@ -1008,95 +997,6 @@ function renderRoute(r) {
   bindVehicle();
 }
 
-/* ---------- 南北岛组合 ---------- */
-const comboOptions = isl => OR.filter(r => (isl === 'N' ? r.type === 'north' : r.type === 'main') || (r.type === 'custom' && r.stops.length > 1 && state.custom.island === isl));
-function comboRoutes() {
-  const c = state.combo;
-  const pick = (isl, id) => comboOptions(isl).find(r => r.id === id) || comboOptions(isl)[0];
-  return [pick('N', c.n), pick('S', c.s)].filter(Boolean);
-}
-// 两段日期检查：按包车出发日期排先后，比较前一段离开日和后一段抵达日
-function comboCheck(segs) {
-  const tds = segs.map(r => tripDates(r));
-  if (tds.some(t => !t)) return { level: 'info', msg: `请为${segs.filter((r, i) => !tds[i]).map(r => PLACES[r.stops[0]].island === 'N' ? '北岛' : '南岛').join('和')}部分填写抵达日期，系统会检查两段日期是否衔接。` };
-  const order = [0, 1].sort((a, b) => tds[a].arrive - tds[b].arrive);
-  const [A, B] = order.map(i => segs[i]), [ta, tb] = order.map(i => tds[i]);
-  const isl = r => PLACES[r.stops[0]].island === 'N' ? '北岛' : '南岛';
-  const gap = Math.round((tb.arrive - ta.leave) / 864e5);
-  const lv = `${isl(A)} ${fmtD(ta.leave)} 离开${PLACES[A.stops[A.stops.length - 1]].name}`, ar = `${isl(B)} ${fmtD(tb.arrive)} 抵达${PLACES[B.stops[0]].name}`;
-  if (tb.arrive < ta.leave) {
-    const over = Math.round((ta.leave - tb.arrive) / 864e5);
-    return { level: 'err', msg: `日期重叠 ${over} 天：${lv}，但${ar}，两段行程同时进行。请把${isl(B)}的抵达日期改到 ${fmtD(ta.leave)} 或之后，或减少${isl(A)}的住宿晚数。` };
-  }
-  if (gap === 0) return { level: 'ok', msg: `日期衔接：${lv}，同一天${ar.replace(/^.. /, '')}（需当天搭乘跨岛航班，机票不含在报价内）。` };
-  return { level: 'warn', msg: `中间多出 ${gap} 天未安排：${lv}，${ar}，${fmtD(ta.leave)} 至 ${fmtD(tb.arrive)} 之间有 ${gap} 晚没有住宿和行程。请调整日期，或增加住宿晚数 / 提前抵达。` };
-}
-function renderCombo() {
-  const segs = comboRoutes();
-  if (segs.length < 2) { $('#content').innerHTML = '<section><p class="desc">请先在北岛和南岛各选一条线路。</p></section>'; return; }
-  const qs = segs.map(r => quoteFor(r));
-  const chk = comboCheck(segs);
-  const total = radd(...qs.map(q => q.total));
-  const seg = (r, q, isl) => {
-    const td = q.td;
-    return `<section class="segbox" style="--c:${r.color}">
-      <h2>${isl === 'N' ? '🌋 北岛部分' : '🏔️ 南岛部分'}</h2>
-      <div class="chips">${comboOptions(isl).map(o => `<button class="${o.id === r.id ? 'on' : ''}" data-combo="${isl}:${o.id}">${o.name}${o.type === 'custom' ? '' : ' · ' + o.sub.split(' · ')[0]}</button>`).join('')}</div>
-      <p style="margin:2px 0 6px;font-weight:600">${r.stops.map(id => PLACES[id].name).join(' → ')}</p>
-      <div class="dates">
-        <label>抵达${PLACES[r.stops[0]].name}日期<input type="date" data-date="arrive" data-rid="${r.id}" value="${dts(r).arrive}"></label>
-        <label>包车出发日期<input type="date" data-date="start" data-rid="${r.id}" value="${dts(r).start}"></label>
-        <label>离开${PLACES[r.stops[r.stops.length - 1]].name}日期<input type="date" value="${td ? isoD(td.leave) : ''}" disabled></label>
-      </div>
-      <div class="quote" style="margin-top:8px">
-        <div class="ln"><span>行程 ${q.s.days}天${q.s.nights}晚${q.pre ? ` + 抵达后住 ${q.pre.nights} 晚` : ''} · ${q.month} 月${q.seasonName}</span><span></span></div>
-        <div class="ln"><span>包车 ${q.days} 天${q.pre && q.pre.carOn ? ` + 出发前用车 ${q.pre.carDays} 天` : ''}${q.dh ? ' + 空驶费' : ''}${q.airFee ? ' + 接送机' : ''}</span><span>${money(q.car + q.dh + q.airFee + (q.pre ? q.pre.car : 0))}</span></div>
-        <div class="ln"><span>住宿（常规–高端）</span><span>${mr(radd(q.stay, q.pre ? q.pre.stay : 0))}</span></div>
-        <div class="ln"><span>已选活动</span><span>${money(q.act)}</span></div>
-        <div class="ln tot"><span>${isl === 'N' ? '北岛' : '南岛'}小计</span><span>${mr(q.total)}</span></div>
-      </div>
-      <p class="fine" style="margin:6px 0 0">住宿晚数、活动、加选行程、接送机请在 <a href="#" data-goto="${r.id}">「${r.name} · ${r.sub.split(' · ')[0]}」</a> 里调整，这里会自动同步。</p>
-    </section>`;
-  };
-  $('#content').innerHTML = `
-    <section><h2 style="color:#4338ca">南北岛组合 · 两岛一起报价</h2>
-      <p class="desc">分别选择北岛和南岛线路并填写各自的日期，系统会检查两段日期是否衔接，并把两段费用合并成一份报价。</p>
-      <div class="chk ${chk.level}">${{ ok: '✅', warn: '⚠️', err: '⛔', info: '📅' }[chk.level]} ${chk.msg}</div>
-    </section>
-    ${seg(segs[0], qs[0], 'N')}
-    ${seg(segs[1], qs[1], 'S')}
-    ${vehicleHtml(qs[0].days + qs[1].days)}
-    <section style="border-bottom:0">
-      <div class="quote">
-        <div class="ln"><span>北岛小计（${segs[0].name} · ${segs[0].sub.split(' · ')[0]}）</span><span>${mr(qs[0].total)}</span></div>
-        <div class="ln"><span>南岛小计（${segs[1].name}${segs[1].addonNames && segs[1].addonNames.length ? ' + ' + segs[1].addonNames.join(' + ') : ''}）</span><span>${mr(qs[1].total)}</span></div>
-        <div class="ln tot"><span>两岛合计（NZD）</span><span>${mr(total)}</span></div>
-        <div class="ln"><span>人均</span><span>${mr(rmul(total, 1 / state.people))}</span></div>
-      </div>
-      ${chk.level === 'err' || chk.level === 'warn' ? `<div class="chk ${chk.level}" style="margin-top:10px">${chk.level === 'err' ? '⛔' : '⚠️'} ${chk.msg}</div>` : ''}
-      <p class="fine">* 两段分别按各自出发月份计算淡旺季价格；跨岛机票、餐饮、保险未计入。所有价格为新西兰元 (NZD) 参考价。</p>
-      ${inquiryHtml({ color: '#4338ca' }, null, staySumHtml(segs[0], qs[0].pre, '北岛 · ') + staySumHtml(segs[1], qs[1].pre, '南岛 · '))}
-    </section>`;
-  const pref = (tag, f) => Object.fromEntries(Object.entries(f).map(([k, v]) => [`${tag}${k}`, v]));
-  state.quote = {
-    '线路': `南北岛组合：${segs[0].name} · ${segs[0].sub.split(' · ')[0]} + ${segs[1].name}`,
-    '出行人数': `${state.people} 人`,
-    '日期检查': chk.msg,
-    ...pref('【北岛】', qs[0].fields),
-    ...pref('【南岛】', qs[1].fields),
-    '两岛合计 (NZD)': mr(total),
-    '人均 (NZD)': mr(rmul(total, 1 / state.people)),
-  };
-  document.querySelectorAll('[data-combo]').forEach(b => b.onclick = () => {
-    const [isl, id] = b.dataset.combo.split(':'); state.combo[isl === 'N' ? 'n' : 's'] = id;
-    const y = $('aside').scrollTop; render(); drawActive(); $('aside').scrollTop = y;
-  });
-  document.querySelectorAll('[data-goto]').forEach(a => a.onclick = e => { e.preventDefault(); setRoute(a.dataset.goto); });
-  bindInquiry();
-  bindBuilder();
-  bindVehicle();
-}
-
 function renderAll() {
   const rows = type => OR.filter(r => r.type === type).map(r => {
     const s = routeStats(r);
@@ -1130,8 +1030,7 @@ function render() {
   // 有填日期的线路，按出发日期所在月份显示淡旺季
   if (r && (dts(r).start || dts(r).arrive)) state.month = parseD(dts(r).start || dts(r).arrive).getMonth() + 1;
   renderTabs();
-  if (state.route === 'combo') renderCombo();
-  else r ? renderRoute(r) : renderAll();
+  r ? renderRoute(r) : renderAll();
   $('#tour').style.display = r ? '' : 'none';
   $('#tour').style.setProperty('--c', r ? r.color : '#1d2327');
 }
