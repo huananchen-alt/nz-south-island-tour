@@ -212,11 +212,11 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://js.hcaptcha.com/1/api.js?render=explicit&hl=zh-CN" async defer></script>
-<script src="data.js?v=202610170006"></script>
-<script src="geo.js?v=202610170006"></script>
+<script src="data.js?v=202610170007"></script>
+<script src="geo.js?v=202610170007"></script>
 <script>
 // 页面版本（由 bump-version.sh 更新）。微信等浏览器会缓存旧页面，打开时和提交前都检查一次，过期就自动刷新
-const PAGE_VERSION = '202610170006';
+const PAGE_VERSION = '202610170007';
 const latestVersion = () => fetch(`version.json?t=${Date.now()}`, { cache: 'no-store' }).then(r => r.json()).then(d => d.v).catch(() => null);
 function reloadTo(v) {
   try { if (sessionStorage.getItem('reloaded') === v) return false; sessionStorage.setItem('reloaded', v); } catch {}
@@ -494,7 +494,7 @@ function renderTabs() {
     <div class="glabel">北岛 · 自由组合 · 对比</div>${ROUTES.filter(r => r.type === 'north').map(tab).join('')}${tab({ id: 'custom', name: '自由组合', sub: '按顺序自选地点', color: '#0f766e' })}${tab({ id: 'all', name: '全览', sub: '线路对比', color: '#1d2327' })}
     <div class="start">${startHtml}</div>
     <div class="start">出行月份 <span class="seg mon">${Object.keys(SEASON.months).map(m => `<button class="${+m === state.month ? 'on' : ''} ${SEASON.months[m].peak ? 'peak' : ''}" data-mon="${m}" title="${SEASON.months[m].peak ? '旺季' : '淡季'}：${SEASON.months[m].why}">${m}月</button>`).join('')}</span></div>
-    <div class="season"><b style="background:${season().peak ? '#e2780e' : '#1a9c6b'}">${state.month} 月 · ${seasonName()}</b>${season().why}${season().peak ? '' : `，住宿约 ${Math.round(SEASON.offStayFactor * 100) / 10} 折，包车每车每天 −$${-SEASON.offCarAdd}`}</div>
+    <div class="season"><b style="background:${season().peak ? '#e2780e' : '#1a9c6b'}">${state.month} 月 · ${seasonName()}</b>${season().why}${season().peak ? '' : `，住宿约 ${Math.round(SEASON.offStayFactor * 100) / 10} 折`}</div>
     <div class="start">出行人数 <span class="seg ppl">${Array.from({ length: MAX_PEOPLE }, (_, i) => i + 1).map(n => `<button class="${state.people === n ? 'on' : ''}" data-ppl="${n}">${n}</button>`).join('')}</span></div>`;
   $('#tabs').querySelectorAll('.tab').forEach(b => b.onclick = () => setRoute(b.dataset.id));
   $('#tabs').querySelectorAll('[data-mon]').forEach(b => b.onclick = () => { state.month = +b.dataset.mon; const y = $('aside').scrollTop; render(); $('aside').scrollTop = y; });
