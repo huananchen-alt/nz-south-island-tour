@@ -200,11 +200,11 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://js.hcaptcha.com/1/api.js?render=explicit&hl=zh-CN" async defer></script>
-<script src="data.js?v=202610162110"></script>
-<script src="geo.js?v=202610162110"></script>
+<script src="data.js?v=202610162132"></script>
+<script src="geo.js?v=202610162132"></script>
 <script>
 // 页面版本（由 bump-version.sh 更新）。微信等浏览器会缓存旧页面，打开时和提交前都检查一次，过期就自动刷新
-const PAGE_VERSION = '202610162110';
+const PAGE_VERSION = '202610162132';
 const latestVersion = () => fetch(`version.json?t=${Date.now()}`, { cache: 'no-store' }).then(r => r.json()).then(d => d.v).catch(() => null);
 function reloadTo(v) {
   try { if (sessionStorage.getItem('reloaded') === v) return false; sessionStorage.setItem('reloaded', v); } catch {}
@@ -554,6 +554,19 @@ function getCaptchaToken() {
 }
 const capDone = t => window.capDone && window.capDone(t);
 
+async function postJSON(url, body) {
+  const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(body) });
+  return { res, data: await res.json().catch(() => ({})) };
+}
+async function sendWeb3Forms(body) {
+  const { res, data } = await postJSON('https://api.web3forms.com/submit', body);
+  if (!res.ok || !data.success) throw new Error(data.message || res.status);
+}
+async function sendFormSubmit(body) {
+  const { res, data } = await postJSON(`https://formsubmit.co/ajax/${QUOTE_FORM.formsubmitId || QUOTE_FORM.fallbackEmail.join('@')}`, body);
+  if (!res.ok || String(data.success) !== 'true') throw new Error(data.message || res.status);
+}
+
 function bindInquiry() {
   const form = $('#qform');
   if (!form) return;
@@ -567,31 +580,34 @@ function bindInquiry() {
     if (!(f.name || '').trim() || !(f.contact || '').trim()) { msg.className = 'qmsg err'; msg.textContent = '请填写姓名和微信号 / 电话。'; return; }
     if (!QUOTE_FORM.accessKey) { msg.className = 'qmsg err'; msg.textContent = '报价系统尚未配置，请直接联系我们。'; return; }
     btn.disabled = true; btn.textContent = '提交中…'; msg.textContent = ''; $('#qfallback').hidden = true;
+    const subject = `${QUOTE_FORM.subject}｜${f.name}｜${state.quote['线路']}｜${state.month}月｜${state.quote['出行人数']}`;
+    const fields = {
+      '客人姓名': f.name, '微信/电话': f.contact, '客人邮箱': f.email || '未填写', '计划出发日期': f.date || '未填写', '其他需求': f.note || '无',
+      ...state.quote,
+    };
+    const errors = [];
     try {
-      btn.textContent = '等待人机验证…';
-      const token = await getCaptchaToken();
-      btn.textContent = '提交中…';
-      const body = {
-        'h-captcha-response': token,
-        access_key: QUOTE_FORM.accessKey,
-        subject: `${QUOTE_FORM.subject}｜${f.name}｜${state.quote['线路']}｜${state.month}月｜${state.quote['出行人数']}`,
-        from_name: '南岛包车报价页面',
-        botcheck: form.botcheck.checked,
-        '客人姓名': f.name, '微信/电话': f.contact, '客人邮箱': f.email || '未填写', '计划出发日期': f.date || '未填写', '其他需求': f.note || '无',
-        ...state.quote,
-      };
-      if (f.email) body.replyto = f.email;
-      const res = await fetch('https://api.web3forms.com/submit', {
-        method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(body),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data.success) throw new Error(data.message || res.status);
+      // 通道 1：Web3Forms（需要人机验证）
+      try {
+        btn.textContent = '等待人机验证…';
+        const token = await getCaptchaToken();
+        btn.textContent = '提交中…';
+        await sendWeb3Forms({ 'h-captcha-response': token, access_key: QUOTE_FORM.accessKey, subject, from_name: '南岛包车报价页面',
+          botcheck: form.botcheck.checked, ...(f.email ? { replyto: f.email } : {}), ...fields });
+      } catch (err) {
+        if (err.message === '已取消人机验证') throw err;
+        errors.push('通道1：' + err.message);
+        // 通道 2：FormSubmit（Web3Forms 拦截某些网络 / 微信浏览器时自动改用）
+        btn.textContent = '换备用通道提交中…';
+        await sendFormSubmit({ _subject: subject, _template: 'table', _captcha: 'false', ...(f.email ? { _replyto: f.email } : {}), ...fields });
+      }
       msg.className = 'qmsg ok'; msg.textContent = '✅ 已收到您的报价咨询，我们会尽快与您联系！';
       state.form = {}; FORM_FIELDS.forEach(x => { form[x.k].value = ''; });
     } catch (err) {
       if (err.message === '已取消人机验证') { msg.className = 'qmsg'; msg.textContent = '已取消提交。'; return; }
+      if (errors.length && !errors.includes(err.message)) errors.push('通道2：' + err.message);
       msg.className = 'qmsg err';
-      msg.textContent = '提交没有成功（' + err.message + '）。微信内置浏览器有时会被拦截，您可以：① 点右上角「···」选「在浏览器中打开」后重试；② 用下面的方式把报价内容发给我们。';
+      msg.textContent = '提交没有成功（' + (errors.join('；') || err.message) + '）。您可以：① 点右上角「···」选「在浏览器中打开」后重试；② 用下面的方式把报价内容发给我们。';
       showFallback(f);
     } finally {
       btn.disabled = false; btn.textContent = '提交报价咨询';

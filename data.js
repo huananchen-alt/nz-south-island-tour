@@ -248,6 +248,8 @@ const QUOTE_FORM = {
   // 提交失败时的备用邮箱（拆开写，减少被爬虫抓取）
   fallbackEmail: ['goldeneast88', 'gmail.com'],
   // Web3Forms 免费版共用的 hCaptcha sitekey（需在 Web3Forms 后台把该表单的验证码设为 hCaptcha）
+  // 备用通道 FormSubmit：激活后可把这里换成 FormSubmit 邮件里给的随机字符串，隐藏邮箱地址（留空则用 fallbackEmail）
+  formsubmitId: '',
   hcaptchaSitekey: '50b2fe65-b00b-4b9e-ad62-3ba471098be2',
 };
 
