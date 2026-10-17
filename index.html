@@ -34,6 +34,7 @@
   .seg button { border: 0; background: transparent; border-radius: 6px; padding: 2px 11px; font: inherit; font-weight: 600; color: var(--muted); cursor: pointer; }
   .seg button.on { background: var(--panel); color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,.15); }
   .fixed { font-weight: 600; color: var(--ink); }
+  .pplwrap { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; }
   .pplsel { font: inherit; font-weight: 600; font-size: 13px; color: var(--ink); background: var(--soft); border: 1px solid var(--line); border-radius: 8px; padding: 3px 8px; min-width: 76px; }
   .seg.mon { flex-wrap: nowrap; }
   .seg.mon button { padding: 2px 0; width: 27px; font-size: 12px; position: relative; }
@@ -242,11 +243,11 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://js.hcaptcha.com/1/api.js?render=explicit&hl=zh-CN" async defer></script>
-<script src="data.js?v=202610180021"></script>
-<script src="geo.js?v=202610180021"></script>
+<script src="data.js?v=202610180022"></script>
+<script src="geo.js?v=202610180022"></script>
 <script>
 // 页面版本（由 bump-version.sh 更新）。微信等浏览器会缓存旧页面，打开时和提交前都检查一次，过期就自动刷新
-const PAGE_VERSION = '202610180021';
+const PAGE_VERSION = '202610180022';
 const latestVersion = () => fetch(`version.json?t=${Date.now()}`, { cache: 'no-store' }).then(r => r.json()).then(d => d.v).catch(() => null);
 function reloadTo(v) {
   try { if (sessionStorage.getItem('reloaded') === v) return false; sessionStorage.setItem('reloaded', v); } catch {}
@@ -551,9 +552,8 @@ function renderTabs() {
   $('#tabs').innerHTML = `<div class="glabel">全览 · 自由组合</div>${tab({ id: 'all', name: '全览', sub: '线路对比', color: '#1d2327' })}${tab({ id: 'custom', name: '自由组合', sub: '按顺序自选地点', color: '#0f766e' })}
     <div class="glabel">北岛（奥克兰出发）</div>${ROUTES.filter(r => r.type === 'north').map(tab).join('')}
     <div class="glabel">南岛经典线路（可加选米尔福德 / 凯库拉 / 阿卡罗阿）</div>${ROUTES.filter(r => r.type === 'main').map(tab).join('')}
-    <div class="start">${startHtml}</div>
-
-    <div class="start">人数 <select class="pplsel" data-pplsel>${Array.from({ length: MAX_PEOPLE }, (_, i) => i + 1).map(n => `<option value="${n}" ${state.people === n ? 'selected' : ''}>${n} 人</option>`).join('')}</select></div>`;
+    <div class="start">${startHtml}<span class="pplwrap">人数 <select class="pplsel" data-pplsel>${Array.from({ length: MAX_PEOPLE }, (_, i) => i + 1).map(n => `<option value="${n}" ${state.people === n ? 'selected' : ''}>${n} 人</option>`).join('')}</select></span></div>
+`;
   $('#tabs').querySelectorAll('.tab').forEach(b => b.onclick = () => setRoute(b.dataset.id));
   $('#tabs').querySelectorAll('[data-pplsel]').forEach(sel => sel.onchange = () => setPeople(+sel.value));
   $('#tabs').querySelectorAll('[data-start]').forEach(b => b.onclick = () => {
