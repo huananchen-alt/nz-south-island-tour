@@ -1,6 +1,6 @@
 // 新西兰南岛线路数据（价格单位：新西兰元 NZD，2026 旺季参考价，以实际预订为准）
 // stay = 每人每晚住宿价格区间 [常规, 高端]（按两人一间均摊；常规 = 3–4 星酒店/汽车旅馆，高端 = 当地高端酒店/精品度假屋）
-// 活动 p = 每人价格（0 = 免费），d = 游玩时长，u = 官方网站
+// 活动 p = 每人价格（0 = 免费；[低, 高] = 按档位的价格区间），d = 游玩时长，u = 官方网站
 
 const PLACES = {
   chc: { name: '基督城', en: 'Christchurch', lat: -43.5321, lng: 172.6362, stay: [80, 300],
@@ -47,12 +47,23 @@ const PLACES = {
     ] },
   zqn: { name: '皇后镇', en: 'Queenstown', lat: -45.0312, lng: 168.6626, stay: [110, 550],
     intro: '世界冒险之都，蹦极、喷射快艇发源地，湖光山色。',
+    // p 可以是 [低, 高]：有多个档位（如跳伞高度、蹦极地点、蒸汽船套餐）的活动按区间计入总价
     acts: [
       { n: '天空缆车 + 斜坡滑车 Skyline Gondola & Luge', p: 95, d: '2 小时', t: '观景', u: 'https://www.skyline.co.nz/queenstown/' },
       { n: '沙特佛峡谷喷射快艇 Shotover Jet', p: 169, d: '1 小时', t: '刺激', u: 'https://www.shotoverjet.com' },
-      { n: '卡瓦劳大桥蹦极 Kawarau Bungy', p: 275, d: '1.5 小时', t: '刺激', u: 'https://www.bungy.co.nz' },
-      { n: '15000 英尺高空跳伞 NZONE Skydive', p: 515, d: '3–4 小时', t: '刺激', u: 'https://www.nzoneskydive.co.nz' },
-      { n: '厄恩斯劳号蒸汽船 + 瓦尔特峰牧场', p: 95, d: '3.5 小时', t: '休闲', u: 'https://www.realnz.com' },
+      { n: '蹦极 AJ Hackett Bungy', p: [245, 365], d: '1.5–3 小时', t: '刺激', u: 'https://www.bungy.co.nz' },
+      { n: '峡谷秋千 Swing', p: [219, 299], d: '1.5–3 小时', t: '刺激', u: 'https://www.bungy.co.nz' },
+      { n: '高空跳伞 NZONE Skydive', p: [319, 515], d: '3–4 小时', t: '刺激', u: 'https://www.nzoneskydive.co.nz' },
+      { n: '室内跳伞 iFLY Queenstown', p: [86, 160], d: '1 小时', t: '刺激', u: 'https://iflyqueenstown.co.nz' },
+      { n: '双人滑翔伞 Tandem Paragliding', p: [268, 349], d: '1.5 小时', t: '刺激' },
+      { n: '鲨鱼快艇 Hydro Attack', p: [155, 179], d: '30 分钟', t: '刺激', u: 'https://watersports.nz/hydro-attack' },
+      { n: '激流漂流 Shotover River Rafting', p: [219, 289], d: '4–5 小时', t: '探险', u: 'https://www.realnz.com' },
+      { n: '山地车 Skyline 缆车山地车公园', p: [65, 130], d: '半天', t: '运动', u: 'https://www.skyline.co.nz/queenstown/mountain-biking/' },
+      { n: '皇后镇高尔夫 Queenstown Golf Club', p: [120, 175], d: '4–5 小时', t: '运动', u: 'https://www.queenstowngolf.co.nz' },
+      { n: '厄恩斯劳号蒸汽船 TSS Earnslaw', p: [85, 179], d: '1.5–4 小时', t: '休闲', u: 'https://www.realnz.com/en/experiences/day-cruises/tss-earnslaw-lake-cruises/' },
+      { n: 'Onsen 温泉 Onsen Hot Pools', p: [65, 110], d: '1 小时', t: '休闲', u: 'https://www.onsen.co.nz' },
+      { n: '米其林级高端餐厅（Amisfield 等）', p: [150, 320], d: '2–3 小时', t: '美食', u: 'https://amisfield.co.nz' },
+      { n: '格林诺奇半日游（包车前往）Glenorchy', p: 0, d: '半天', t: '观景' },
       { n: '箭镇淘金小镇 Arrowtown', p: 0, d: '2 小时', t: '文化' },
     ] },
   tea: { name: '蒂阿瑙', en: 'Te Anau', lat: -45.4144, lng: 167.7180, stay: [80, 250],
