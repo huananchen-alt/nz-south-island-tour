@@ -1,6 +1,6 @@
 // 新西兰南岛线路数据（价格单位：新西兰元 NZD，2026 旺季参考价，以实际预订为准）
 // stay = 每人每晚住宿价格区间 [常规, 高端]（按两人一间均摊；常规 = 3–4 星酒店/汽车旅馆，高端 = 当地高端酒店/精品度假屋）
-// 活动 p = 每人价格（0 = 免费；[低, 高] = 按档位的价格区间），d = 游玩时长，u = 官方网站
+// 活动 p = 每人价格（0 = 免费；[低, 高] = 按档位的价格区间），d = 游玩时长，u = 官方网站，age = 年龄/身高/体重限制
 
 const PLACES = {
   chc: { name: '基督城', en: 'Christchurch', lat: -43.5321, lng: 172.6362, stay: [80, 300],
@@ -41,8 +41,8 @@ const PLACES = {
       { n: '孤独的树 That Wanaka Tree', p: 0, d: '30 分钟', t: '打卡' },
       { n: '罗伊峰徒步 Roys Peak', p: 0, d: '5–6 小时', t: '徒步' },
       { n: '迷惑世界 Puzzling World', p: 25, d: '1.5 小时', t: '亲子', u: 'https://www.puzzlingworld.co.nz' },
-      { n: '亲手驾驶飞机体验 U-Fly Wanaka（同行 1 人免费）', p: 408, d: '1 小时', t: '刺激', u: 'https://www.u-flywanaka.co.nz/trial-flight/lake-wanaka-trial-flight' },
-      { n: '真枪射击体验 Real Guns NZ（卡德罗纳山谷）', p: 170, d: '2 小时', t: '刺激' },
+      { n: '亲手驾驶飞机体验 U-Fly Wanaka（同行 1 人免费）', p: 408, d: '1 小时', t: '刺激', u: 'https://www.u-flywanaka.co.nz/trial-flight/lake-wanaka-trial-flight', age: '10 岁以上' },
+      { n: '真枪射击体验 Real Guns NZ（卡德罗纳山谷）', p: 170, d: '2 小时', t: '刺激', age: '7 岁以上，7–14 岁须家长陪同' },
       { n: '瓦纳卡湖皮划艇', p: 70, d: '2 小时', t: '休闲', u: 'https://www.paddlewanaka.co.nz' },
     ] },
   zqn: { name: '皇后镇', en: 'Queenstown', lat: -45.0312, lng: 168.6626, stay: [110, 550],
@@ -51,17 +51,17 @@ const PLACES = {
     acts: [
       { n: '天空缆车 + 斜坡滑车 Skyline Gondola & Luge', p: 95, d: '2 小时', t: '观景', u: 'https://www.skyline.co.nz/queenstown/' },
       { n: '沙特佛峡谷喷射快艇 Shotover Jet', p: 169, d: '1 小时', t: '刺激', u: 'https://www.shotoverjet.com' },
-      { n: '蹦极 AJ Hackett Bungy', p: [245, 365], d: '1.5–3 小时', t: '刺激', u: 'https://www.bungy.co.nz' },
-      { n: '峡谷秋千 Swing', p: [219, 299], d: '1.5–3 小时', t: '刺激', u: 'https://www.bungy.co.nz' },
-      { n: '高空跳伞 NZONE Skydive', p: [319, 515], d: '3–4 小时', t: '刺激', u: 'https://www.nzoneskydive.co.nz' },
-      { n: '室内跳伞 iFLY Queenstown', p: [86, 160], d: '1 小时', t: '刺激', u: 'https://iflyqueenstown.co.nz' },
-      { n: '双人滑翔伞 Tandem Paragliding', p: [268, 349], d: '1.5 小时', t: '刺激' },
-      { n: '鲨鱼快艇 Hydro Attack', p: [155, 179], d: '30 分钟', t: '刺激', u: 'https://watersports.nz/hydro-attack' },
-      { n: '激流漂流 Shotover River Rafting', p: [219, 289], d: '4–5 小时', t: '探险', u: 'https://www.realnz.com' },
+      { n: '蹦极 AJ Hackett Bungy', p: [245, 365], d: '1.5–3 小时', t: '刺激', u: 'https://www.bungy.co.nz', age: '10 岁以上（内维斯蹦极 13 岁以上），未满 15 岁须家长签字' },
+      { n: '峡谷秋千 Swing', p: [219, 299], d: '1.5–3 小时', t: '刺激', u: 'https://www.bungy.co.nz', age: '10 岁以上，未满 15 岁须家长签字' },
+      { n: '高空跳伞 NZONE Skydive', p: [319, 515], d: '3–4 小时', t: '刺激', u: 'https://www.nzoneskydive.co.nz', age: '6 岁以上，未满 18 岁须家长签字' },
+      { n: '室内跳伞 iFLY Queenstown', p: [86, 160], d: '1 小时', t: '刺激', u: 'https://iflyqueenstown.co.nz', age: '3 岁以上' },
+      { n: '双人滑翔伞 Tandem Paragliding', p: [268, 349], d: '1.5 小时', t: '刺激', age: '体重 20–100 公斤' },
+      { n: '鲨鱼快艇 Hydro Attack', p: [155, 179], d: '30 分钟', t: '刺激', u: 'https://watersports.nz/hydro-attack', age: '6 岁以上，身高 190 厘米、体重 105 公斤以下' },
+      { n: '激流漂流 Shotover River Rafting', p: [219, 289], d: '4–5 小时', t: '探险', u: 'https://www.realnz.com', age: '13 岁以上' },
       { n: '山地车 Skyline 缆车山地车公园', p: [65, 130], d: '半天', t: '运动', u: 'https://www.skyline.co.nz/queenstown/mountain-biking/' },
       { n: '皇后镇高尔夫 Queenstown Golf Club', p: [120, 175], d: '4–5 小时', t: '运动', u: 'https://www.queenstowngolf.co.nz' },
       { n: '厄恩斯劳号蒸汽船 TSS Earnslaw', p: [85, 179], d: '1.5–4 小时', t: '休闲', u: 'https://www.realnz.com/en/experiences/day-cruises/tss-earnslaw-lake-cruises/' },
-      { n: 'Onsen 温泉 Onsen Hot Pools', p: [65, 110], d: '1 小时', t: '休闲', u: 'https://www.onsen.co.nz' },
+      { n: 'Onsen 温泉 Onsen Hot Pools', p: [65, 110], d: '1 小时', t: '休闲', u: 'https://www.onsen.co.nz', age: '5 岁以下不可入场；5–11 岁仅限白天；晚间 12 岁以上' },
       { n: '米其林级高端餐厅（Amisfield 等）', p: [150, 320], d: '2–3 小时', t: '美食', u: 'https://amisfield.co.nz' },
       { n: '格林诺奇半日游（包车前往）Glenorchy', p: 0, d: '半天', t: '观景' },
       { n: '箭镇淘金小镇 Arrowtown', p: 0, d: '2 小时', t: '文化' },
@@ -84,7 +84,7 @@ const PLACES = {
     intro: '雪山直插大海，全年可观抹香鲸、海豚、海豹，龙虾闻名。',
     acts: [
       { n: '出海观鲸 Whale Watch', p: 175, d: '3.5 小时', t: '野生动物', u: 'https://www.whalewatch.co.nz' },
-      { n: '与野生海豚共游 Dolphin Encounter', p: 240, d: '3 小时', t: '野生动物', u: 'https://www.dolphinencounter.co.nz' },
+      { n: '与野生海豚共游 Dolphin Encounter', p: 240, d: '3 小时', t: '野生动物', u: 'https://www.dolphinencounter.co.nz', age: '下水 8 岁以上，未满 14 岁须成人同行' },
       { n: '海豹栖息地 Point Kean', p: 0, d: '1 小时', t: '野生动物' },
       { n: '海边龙虾餐', p: 70, d: '1 小时', t: '美食' },
     ] },
@@ -141,7 +141,7 @@ const PLACES = {
     intro: '西海岸最大城镇，淘金历史。',
     acts: [
       { n: '淘金镇 Shantytown', p: 39, d: '2 小时', t: '文化', u: 'https://www.shantytown.co.nz' },
-      { n: '门泰斯啤酒厂 Monteith’s', p: 35, d: '1 小时', t: '美食', u: 'https://www.monteiths.co.nz' },
+      { n: '门泰斯啤酒厂 Monteith’s', p: 35, d: '1 小时', t: '美食', u: 'https://www.monteiths.co.nz', age: '品酒须年满 18 岁' },
     ] },
   pun: { name: '普纳凯基', en: 'Punakaiki', lat: -42.1080, lng: 171.3360, stay: [90, 300],
     intro: '千层饼岩与海水喷水洞，涨潮时最壮观。',
@@ -160,7 +160,7 @@ const PLACES = {
   fra: { name: '弗朗茨约瑟夫冰川', en: 'Franz Josef', lat: -43.3890, lng: 170.1830, stay: [90, 300],
     intro: '冰川一直延伸到温带雨林，直升机冰川徒步首选地。',
     acts: [
-      { n: '直升机冰川徒步 Heli Hike', p: 549, d: '3–4 小时', t: '刺激', u: 'https://www.franzjosefglacier.com' },
+      { n: '直升机冰川徒步 Heli Hike', p: 549, d: '3–4 小时', t: '刺激', u: 'https://www.franzjosefglacier.com', age: '9–10 岁以上（各公司规定不同），体重 35 公斤、身高 137 厘米以上' },
       { n: '冰川谷步道 Glacier Valley Walk', p: 0, d: '1.5 小时', t: '徒步' },
       { n: '雨林温泉 Glacier Hot Pools', p: 35, d: '1.5 小时', t: '休闲' },
       { n: '西海岸野生动物中心（看几维鸟）', p: 45, d: '1 小时', t: '野生动物', u: 'https://www.wildkiwi.co.nz' },
@@ -185,8 +185,8 @@ const PLACES = {
     acts: [
       { n: '天空塔观景台 Sky Tower', p: 37, d: '1 小时', t: '观景', u: 'https://www.skycityauckland.co.nz/sky-tower/' },
       { n: '伊甸山火山口 Mt Eden', p: 0, d: '1 小时', t: '打卡' },
-      { n: '海港大桥攀爬 Harbour Bridge Climb', p: 165, d: '1.5 小时', t: '刺激', u: 'https://www.bungy.co.nz/auckland/' },
-      { n: '激流岛酒庄一日游 Waiheke Island（含渡轮）', p: 60, d: '5–6 小时', t: '美食', u: 'https://www.fullers.co.nz' },
+      { n: '海港大桥攀爬 Harbour Bridge Climb', p: 165, d: '1.5 小时', t: '刺激', u: 'https://www.bungy.co.nz/auckland/', age: '7 岁以上，14 岁及以下须成人陪同' },
+      { n: '激流岛酒庄一日游 Waiheke Island（含渡轮）', p: 60, d: '5–6 小时', t: '美食', u: 'https://www.fullers.co.nz', age: '品酒须年满 18 岁' },
     ] },
   hob: { island: 'N', name: '霍比特村', en: 'Hobbiton (Matamata)', lat: -37.8722, lng: 175.6830, stay: [0, 0],
     intro: '《指环王》《霍比特人》电影拍摄地，44 个霍比特人洞屋与绿龙酒馆。',
@@ -209,7 +209,7 @@ const PLACES = {
     acts: [
       { n: '胡卡瀑布 Huka Falls', p: 0, d: '30 分钟', t: '打卡' },
       { n: '胡卡瀑布喷射快艇 Huka Falls Jet', p: 159, d: '1 小时', t: '刺激', u: 'https://www.hukafallsjet.com' },
-      { n: '陶波高空跳伞 Taupō Tandem Skydive', p: 399, d: '3 小时', t: '刺激', u: 'https://www.skydivetaupo.co.nz' },
+      { n: '陶波高空跳伞 Taupō Tandem Skydive', p: 399, d: '3 小时', t: '刺激', u: 'https://www.skydivetaupo.co.nz', age: '8 岁以上（更高高度 14 岁以上），未满 18 岁须家长签字' },
       { n: '毛利石刻游船 Māori Rock Carvings Cruise', p: 65, d: '2 小时', t: '文化', u: 'https://www.chrisjolly.co.nz' },
       { n: '汤加里罗高山徒步 Tongariro Alpine Crossing', p: 0, d: '7–8 小时', t: '徒步' },
     ] },
@@ -218,7 +218,6 @@ const PLACES = {
     acts: [
       { n: '怀托摩萤火虫洞参观 Waitomo Glowworm Caves', p: 75, d: '45 分钟', t: '自然', u: 'https://www.waitomo.com' },
       { n: '鲁阿库里溶洞 Ruakuri Cave', p: 105, d: '1.5 小时', t: '自然', u: 'https://www.waitomo.com' },
-      { n: '黑水漂流 Black Water Rafting', p: 215, d: '3 小时', t: '探险', u: 'https://www.waitomo.com' },
     ] },
 };
 
