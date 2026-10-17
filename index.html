@@ -245,11 +245,11 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://js.hcaptcha.com/1/api.js?render=explicit&hl=zh-CN" async defer></script>
-<script src="data.js?v=202610180047"></script>
-<script src="geo.js?v=202610180047"></script>
+<script src="data.js?v=202610180051"></script>
+<script src="geo.js?v=202610180051"></script>
 <script>
 // 页面版本（由 bump-version.sh 更新）。微信等浏览器会缓存旧页面，打开时和提交前都检查一次，过期就自动刷新
-const PAGE_VERSION = '202610180047';
+const PAGE_VERSION = '202610180051';
 const latestVersion = () => fetch(`version.json?t=${Date.now()}`, { cache: 'no-store' }).then(r => r.json()).then(d => d.v).catch(() => null);
 function reloadTo(v) {
   try { if (sessionStorage.getItem('reloaded') === v) return false; sessionStorage.setItem('reloaded', v); } catch {}
@@ -546,7 +546,9 @@ function renderTabs() {
   const inCart = id => Object.values(state.cart).includes(id);
   const tab = t => `<button class="tab ${state.route === t.id ? 'on' : ''} ${inCart(t.id) ? 'incart' : ''}" style="--c:${t.color}" data-id="${t.id}"><b>${inCart(t.id) ? '✓ ' : ''}${t.tab || t.name}</b><small>${t.sub.split(' · ')[0]}</small></button>`;
   const r = active();
-  const startHtml = r && r.type === 'custom'
+  // 全览不显示出发城市，只保留人数选择
+  const startHtml = state.route === 'all' ? ''
+    : r && r.type === 'custom'
     ? `出发 <span class="fixed">按您点选的顺序</span>`
     : r && r.fixed
     ? `出发 <span class="fixed">${PLACES[r.fixed].name}（固定）</span>`
