@@ -160,7 +160,7 @@ const PLACES = {
   fra: { name: '弗朗茨约瑟夫冰川', en: 'Franz Josef', lat: -43.3890, lng: 170.1830, stay: [90, 300],
     intro: '冰川一直延伸到温带雨林，直升机冰川徒步首选地。',
     acts: [
-      { n: '直升机冰川徒步 Heli Hike', p: 549, d: '3–4 小时', t: '刺激', u: 'https://www.franzjosefglacier.com', age: '10 岁以上，体重 35 公斤、身高 137 厘米以上' },
+      { n: '直升机冰川徒步 Heli Hike', p: 549, d: '3–4 小时', t: '刺激', u: 'https://www.franzjosefglacier.com', age: '9–10 岁以上（各公司规定不同），体重 35 公斤、身高 137 厘米以上' },
       { n: '冰川谷步道 Glacier Valley Walk', p: 0, d: '1.5 小时', t: '徒步' },
       { n: '雨林温泉 Glacier Hot Pools', p: 35, d: '1.5 小时', t: '休闲' },
       { n: '西海岸野生动物中心（看几维鸟）', p: 45, d: '1 小时', t: '野生动物', u: 'https://www.wildkiwi.co.nz' },
@@ -218,7 +218,7 @@ const PLACES = {
     acts: [
       { n: '怀托摩萤火虫洞参观 Waitomo Glowworm Caves', p: 75, d: '45 分钟', t: '自然', u: 'https://www.waitomo.com' },
       { n: '鲁阿库里溶洞 Ruakuri Cave', p: 105, d: '1.5 小时', t: '自然', u: 'https://www.waitomo.com' },
-      { n: '黑水漂流 Black Water Rafting', p: 215, d: '3 小时', t: '探险', u: 'https://www.waitomo.com' },
+      { n: '黑水漂流 Black Water Rafting', p: 215, d: '3 小时', t: '探险', u: 'https://www.waitomo.com', age: '12 岁以上（Black Labyrinth），16 岁以上（Black Abyss）；体重 45 公斤以上' },
     ] },
 };
 
