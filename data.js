@@ -218,7 +218,6 @@ const PLACES = {
     acts: [
       { n: '怀托摩萤火虫洞参观 Waitomo Glowworm Caves', p: 75, d: '45 分钟', t: '自然', u: 'https://www.waitomo.com' },
       { n: '鲁阿库里溶洞 Ruakuri Cave', p: 105, d: '1.5 小时', t: '自然', u: 'https://www.waitomo.com' },
-      { n: '黑水漂流 Black Water Rafting', p: 215, d: '3 小时', t: '探险', u: 'https://www.waitomo.com', age: '12 岁以上（Black Labyrinth），16 岁以上（Black Abyss）；体重 45 公斤以上' },
     ] },
 };
 
