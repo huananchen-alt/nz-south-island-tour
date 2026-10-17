@@ -1,6 +1,6 @@
 // 新西兰南岛线路数据（价格单位：新西兰元 NZD，2026 旺季参考价，以实际预订为准）
 // stay = 每人每晚住宿价格区间 [常规, 高端]（按两人一间均摊；常规 = 3–4 星酒店/汽车旅馆，高端 = 当地高端酒店/精品度假屋）
-// 活动 p = 每人价格（0 = 免费；[低, 高] = 按档位的价格区间），d = 游玩时长，u = 官方网站，age = 年龄/身高/体重限制
+// 活动 p = 每人价格（0 = 免费；[低, 高] = 按档位的价格区间），d = 游玩时长，u = 官方网站，age = 年龄/身高/体重限制，hot = 强烈推荐
 
 const PLACES = {
   chc: { name: '基督城', en: 'Christchurch', lat: -43.5321, lng: 172.6362, stay: [80, 300],
@@ -23,10 +23,9 @@ const PLACES = {
     intro: '新西兰最高峰 3724 米，冰川、冰湖与高山步道。',
     acts: [
       { n: '胡克谷步道 Hooker Valley Track', p: 0, d: '3 小时', t: '徒步' },
-      { n: '塔斯曼冰川湖游船 Glacier Explorers', p: 199, d: '2.5 小时', t: '冰川', u: 'https://www.hermitage.co.nz/experience/glacier-explorer' },
-      { n: '直升机雪地降落观光', p: 545, d: '45 分钟', t: '刺激', u: 'https://www.helicopter.co.nz' },
-      { n: '塔斯曼冰川直升机徒步 Tasman Glacier Heli Hike', p: 795, d: '3.5 小时', t: '冰川', u: 'https://alpineguides.co.nz/trips/tasman-glacier-heli-hike' },
-      { n: '埃德蒙·希拉里爵士高山中心', p: 25, d: '1 小时', t: '文化', u: 'https://www.hermitage.co.nz' },
+      { n: '塔斯曼冰川湖游船 Glacier Explorers', p: [99, 219], d: '2.5 小时', t: '冰川', u: 'https://www.hermitage.co.nz/experience/glacier-explorer', age: '4 岁以上，4–9 岁须成人 1:1 陪同；需步行约 1.5 公里往返湖边' },
+      { n: '直升机雪地降落观光', p: [220, 600], d: '20–55 分钟', t: '刺激', u: 'https://www.helicopter.co.nz', age: '不限年龄：0–3 岁婴儿坐成人腿上（15 公斤以下），4–14 岁儿童票；儿童须成人同行', hot: true },
+      { n: '塔斯曼冰川直升机徒步 Tasman Glacier Heli Hike', p: [695, 945], d: '3.5 小时', t: '冰川', u: 'https://alpineguides.co.nz/trips/tasman-glacier-heli-hike', age: '10 岁以上，体重 120 公斤以下（含装备），每团至少 4 人', hot: true },
     ] },
   twz: { name: '特威泽尔', en: 'Twizel', lat: -44.2580, lng: 170.0990, stay: [80, 250],
     intro: '麦肯齐盆地暗夜保护区里的宁静小镇，紧邻普卡基湖，是住宿、看星空的理想据点。',
@@ -41,8 +40,8 @@ const PLACES = {
       { n: '孤独的树 That Wanaka Tree', p: 0, d: '30 分钟', t: '打卡' },
       { n: '罗伊峰徒步 Roys Peak', p: 0, d: '5–6 小时', t: '徒步' },
       { n: '迷惑世界 Puzzling World', p: 25, d: '1.5 小时', t: '亲子', u: 'https://www.puzzlingworld.co.nz' },
-      { n: '亲手驾驶飞机体验 U-Fly Wanaka（同行 1 人免费）', p: 408, d: '1 小时', t: '刺激', u: 'https://www.u-flywanaka.co.nz/trial-flight/lake-wanaka-trial-flight', age: '10 岁以上' },
-      { n: '真枪射击体验 Real Guns NZ（卡德罗纳山谷）', p: 170, d: '2 小时', t: '刺激', age: '7 岁以上，7–14 岁须家长陪同' },
+      { n: '亲手驾驶飞机体验 U-Fly Wanaka（同行 1 人免费）', p: 408, d: '1 小时', t: '刺激', u: 'https://www.u-flywanaka.co.nz/trial-flight/lake-wanaka-trial-flight', age: '10 岁以上', hot: true },
+      { n: '真枪射击体验 Real Guns NZ（卡德罗纳山谷）', p: 170, d: '2 小时', t: '刺激', age: '7 岁以上，7–14 岁须家长陪同', hot: true },
       { n: '瓦纳卡湖皮划艇', p: 70, d: '2 小时', t: '休闲', u: 'https://www.paddlewanaka.co.nz' },
     ] },
   zqn: { name: '皇后镇', en: 'Queenstown', lat: -45.0312, lng: 168.6626, stay: [110, 550],
@@ -53,7 +52,7 @@ const PLACES = {
       { n: '沙特佛峡谷喷射快艇 Shotover Jet', p: 169, d: '1 小时', t: '刺激', u: 'https://www.shotoverjet.com' },
       { n: '蹦极 AJ Hackett Bungy', p: [245, 365], d: '1.5–3 小时', t: '刺激', u: 'https://www.bungy.co.nz', age: '10 岁以上（内维斯蹦极 13 岁以上），未满 15 岁须家长签字' },
       { n: '峡谷秋千 Swing', p: [219, 299], d: '1.5–3 小时', t: '刺激', u: 'https://www.bungy.co.nz', age: '10 岁以上，未满 15 岁须家长签字' },
-      { n: '高空跳伞 NZONE Skydive', p: [319, 515], d: '3–4 小时', t: '刺激', u: 'https://www.nzoneskydive.co.nz', age: '6 岁以上，未满 18 岁须家长签字' },
+      { n: '高空跳伞 NZONE Skydive', p: [319, 515], d: '3–4 小时', t: '刺激', u: 'https://www.nzoneskydive.co.nz', age: '6 岁以上，未满 18 岁须家长签字', hot: true },
       { n: '室内跳伞 iFLY Queenstown', p: [86, 160], d: '1 小时', t: '刺激', u: 'https://iflyqueenstown.co.nz', age: '3 岁以上' },
       { n: '双人滑翔伞 Tandem Paragliding', p: [268, 349], d: '1.5 小时', t: '刺激', age: '体重 20–100 公斤' },
       { n: '鲨鱼快艇 Hydro Attack', p: [155, 179], d: '30 分钟', t: '刺激', u: 'https://watersports.nz/hydro-attack', age: '6 岁以上，身高 190 厘米、体重 105 公斤以下' },
@@ -160,7 +159,7 @@ const PLACES = {
   fra: { name: '弗朗茨约瑟夫冰川', en: 'Franz Josef', lat: -43.3890, lng: 170.1830, stay: [90, 300],
     intro: '冰川一直延伸到温带雨林，直升机冰川徒步首选地。',
     acts: [
-      { n: '直升机冰川徒步 Heli Hike', p: 549, d: '3–4 小时', t: '刺激', u: 'https://www.franzjosefglacier.com', age: '9–10 岁以上（各公司规定不同），体重 35 公斤、身高 137 厘米以上' },
+      { n: '直升机冰川徒步 Heli Hike', p: 549, d: '3–4 小时', t: '刺激', u: 'https://www.franzjosefglacier.com', age: '9–10 岁以上（各公司规定不同），体重 35 公斤、身高 137 厘米以上', hot: true },
       { n: '冰川谷步道 Glacier Valley Walk', p: 0, d: '1.5 小时', t: '徒步' },
       { n: '雨林温泉 Glacier Hot Pools', p: 35, d: '1.5 小时', t: '休闲' },
       { n: '西海岸野生动物中心（看几维鸟）', p: 45, d: '1 小时', t: '野生动物', u: 'https://www.wildkiwi.co.nz' },
@@ -169,7 +168,7 @@ const PLACES = {
     intro: '马瑟森湖倒映库克山与塔斯曼山的"镜湖"。',
     acts: [
       { n: '马瑟森湖环湖 Lake Matheson', p: 0, d: '1.5 小时', t: '打卡' },
-      { n: '直升机雪地降落观光', p: 345, d: '30 分钟', t: '刺激', u: 'https://www.helicopter.co.nz' },
+      { n: '直升机雪地降落观光', p: 345, d: '30 分钟', t: '刺激', u: 'https://www.helicopter.co.nz', hot: true },
     ] },
   haa: { name: '哈斯特', en: 'Haast', lat: -43.8810, lng: 169.0420, stay: [0, 0],
     intro: '哈斯特山口，原始雨林与蓝色冰川池。',
