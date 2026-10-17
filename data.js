@@ -23,10 +23,9 @@ const PLACES = {
     intro: '新西兰最高峰 3724 米，冰川、冰湖与高山步道。',
     acts: [
       { n: '胡克谷步道 Hooker Valley Track', p: 0, d: '3 小时', t: '徒步' },
-      { n: '塔斯曼冰川湖游船 Glacier Explorers', p: 199, d: '2.5 小时', t: '冰川', u: 'https://www.hermitage.co.nz/experience/glacier-explorer' },
-      { n: '直升机雪地降落观光', p: 545, d: '45 分钟', t: '刺激', u: 'https://www.helicopter.co.nz' },
-      { n: '塔斯曼冰川直升机徒步 Tasman Glacier Heli Hike', p: 795, d: '3.5 小时', t: '冰川', u: 'https://alpineguides.co.nz/trips/tasman-glacier-heli-hike' },
-      { n: '埃德蒙·希拉里爵士高山中心', p: 25, d: '1 小时', t: '文化', u: 'https://www.hermitage.co.nz' },
+      { n: '塔斯曼冰川湖游船 Glacier Explorers', p: [99, 219], d: '2.5 小时', t: '冰川', u: 'https://www.hermitage.co.nz/experience/glacier-explorer', age: '4 岁以上，4–9 岁须成人 1:1 陪同；需步行约 1.5 公里往返湖边' },
+      { n: '直升机雪地降落观光', p: [220, 600], d: '20–55 分钟', t: '刺激', u: 'https://www.helicopter.co.nz', age: '不限年龄：0–3 岁婴儿坐成人腿上（15 公斤以下），4–14 岁儿童票；儿童须成人同行' },
+      { n: '塔斯曼冰川直升机徒步 Tasman Glacier Heli Hike', p: [695, 945], d: '3.5 小时', t: '冰川', u: 'https://alpineguides.co.nz/trips/tasman-glacier-heli-hike', age: '10 岁以上，体重 120 公斤以下（含装备），每团至少 4 人' },
     ] },
   twz: { name: '特威泽尔', en: 'Twizel', lat: -44.2580, lng: 170.0990, stay: [80, 250],
     intro: '麦肯齐盆地暗夜保护区里的宁静小镇，紧邻普卡基湖，是住宿、看星空的理想据点。',
