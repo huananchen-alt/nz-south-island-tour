@@ -11,7 +11,7 @@ const PLACES = {
       { n: '植物园 + 哈格利公园漫步', p: 0, d: '1.5 小时', t: '自然' },
       { n: '复古电车环城游 Tram', p: 35, d: '1 小时', t: '城市', u: 'https://www.christchurchattractions.nz/christchurch-tram/' },
     ] },
-  tek: { stars: true, name: '蒂卡波湖', en: 'Lake Tekapo', lat: -44.0047, lng: 170.4772, stay: [100, 350],
+  tek: { name: '蒂卡波湖', en: 'Lake Tekapo', lat: -44.0047, lng: 170.4772, stay: [100, 350],
     intro: '牛奶蓝湖水 + 好牧羊人教堂 + 世界级暗夜星空保护区，11–12 月鲁冰花盛开。',
     acts: [
       { n: '好牧羊人教堂 Church of the Good Shepherd', p: 0, d: '30 分钟', t: '打卡' },
@@ -28,14 +28,14 @@ const PLACES = {
       { n: '塔斯曼冰川直升机徒步 Tasman Glacier Heli Hike', p: 795, d: '3.5 小时', t: '冰川', u: 'https://alpineguides.co.nz/trips/tasman-glacier-heli-hike' },
       { n: '埃德蒙·希拉里爵士高山中心', p: 25, d: '1 小时', t: '文化', u: 'https://www.hermitage.co.nz' },
     ] },
-  twz: { name: '特威泽尔', en: 'Twizel', lat: -44.2580, lng: 170.0990, stay: [80, 250], stars: true,
+  twz: { name: '特威泽尔', en: 'Twizel', lat: -44.2580, lng: 170.0990, stay: [80, 250],
     intro: '麦肯齐盆地暗夜保护区里的宁静小镇，紧邻普卡基湖，是住宿、看星空的理想据点。',
     acts: [
       { n: '普卡基湖彼得观景点 Peter’s Lookout（远眺库克山）', p: 0, d: '30 分钟', t: '打卡' },
       { n: '库克山高山三文鱼 Mt Cook Alpine Salmon', p: 30, d: '45 分钟', t: '美食', u: 'https://www.alpinesalmon.co.nz' },
       { n: '鲁阿塔尼瓦湖畔散步 Lake Ruataniwha', p: 0, d: '1 小时', t: '休闲' },
     ] },
-  wan: { stars: true, name: '瓦纳卡', en: 'Wanaka', lat: -44.7032, lng: 169.1321, stay: [100, 450],
+  wan: { name: '瓦纳卡', en: 'Wanaka', lat: -44.7032, lng: 169.1321, stay: [100, 450],
     intro: '比皇后镇更安静的湖畔小镇，"孤独的树"所在地。',
     acts: [
       { n: '孤独的树 That Wanaka Tree', p: 0, d: '30 分钟', t: '打卡' },
@@ -45,7 +45,7 @@ const PLACES = {
       { n: '真枪射击体验 Real Guns NZ（卡德罗纳山谷）', p: 170, d: '2 小时', t: '刺激' },
       { n: '瓦纳卡湖皮划艇', p: 70, d: '2 小时', t: '休闲', u: 'https://www.paddlewanaka.co.nz' },
     ] },
-  zqn: { stars: true, name: '皇后镇', en: 'Queenstown', lat: -45.0312, lng: 168.6626, stay: [110, 550],
+  zqn: { name: '皇后镇', en: 'Queenstown', lat: -45.0312, lng: 168.6626, stay: [110, 550],
     intro: '世界冒险之都，蹦极、喷射快艇发源地，湖光山色。',
     acts: [
       { n: '天空缆车 + 斜坡滑车 Skyline Gondola & Luge', p: 95, d: '2 小时', t: '观景', u: 'https://www.skyline.co.nz/queenstown/' },
@@ -85,7 +85,7 @@ const PLACES = {
       { n: '法式小镇漫步 + 灯塔', p: 0, d: '1.5 小时', t: '城市' },
       { n: '鲑鱼 / 生蚝海鲜午餐', p: 50, d: '1 小时', t: '美食' },
     ] },
-  oam: { stars: true, name: '奥马鲁', en: 'Oamaru', lat: -45.0975, lng: 170.9704, stay: [70, 200],
+  oam: { name: '奥马鲁', en: 'Oamaru', lat: -45.0975, lng: 170.9704, stay: [70, 200],
     intro: '维多利亚式白石建筑小镇，蒸汽朋克之都，小蓝企鹅归巢。',
     acts: [
       { n: '小蓝企鹅归巢 Blue Penguin Colony', p: 45, d: '1.5 小时', t: '野生动物', u: 'https://www.penguins.co.nz' },
@@ -97,7 +97,7 @@ const PLACES = {
     acts: [
       { n: '摩拉基大圆石海滩', p: 0, d: '1 小时', t: '打卡' },
     ] },
-  dun: { stars: true, name: '但尼丁', en: 'Dunedin', lat: -45.8788, lng: 170.5028, stay: [70, 250],
+  dun: { name: '但尼丁', en: 'Dunedin', lat: -45.8788, lng: 170.5028, stay: [70, 250],
     intro: '"南半球的爱丁堡"，苏格兰风情大学城，百年火车站与八角广场漫步即可游览。',
     acts: [
       { n: '八角广场 The Octagon（市中心）', p: 0, d: '30 分钟', t: '城市' },
@@ -126,7 +126,7 @@ const PLACES = {
       { n: '城堡山巨石阵 Castle Hill（途经）', p: 0, d: '45 分钟', t: '打卡' },
       { n: '高山观景火车 TranzAlpine（可替代该段驾车）', p: 189, d: '4.5 小时', t: '观景', u: 'https://www.greatjourneysnz.com/routes/tranzalpine/' },
     ] },
-  gry: { stars: 'starsOnly', name: '格雷茅斯', en: 'Greymouth', lat: -42.4499, lng: 171.2077, stay: [70, 200],
+  gry: { name: '格雷茅斯', en: 'Greymouth', lat: -42.4499, lng: 171.2077, stay: [70, 200],
     intro: '西海岸最大城镇，淘金历史。',
     acts: [
       { n: '淘金镇 Shantytown', p: 39, d: '2 小时', t: '文化', u: 'https://www.shantytown.co.nz' },
@@ -154,7 +154,7 @@ const PLACES = {
       { n: '雨林温泉 Glacier Hot Pools', p: 35, d: '1.5 小时', t: '休闲' },
       { n: '西海岸野生动物中心（看几维鸟）', p: 45, d: '1 小时', t: '野生动物', u: 'https://www.wildkiwi.co.nz' },
     ] },
-  fox: { stars: 'starsOnly', name: '福克斯冰川', en: 'Fox Glacier', lat: -43.4640, lng: 170.0170, stay: [80, 250],
+  fox: { name: '福克斯冰川', en: 'Fox Glacier', lat: -43.4640, lng: 170.0170, stay: [80, 250],
     intro: '马瑟森湖倒映库克山与塔斯曼山的"镜湖"。',
     acts: [
       { n: '马瑟森湖环湖 Lake Matheson', p: 0, d: '1.5 小时', t: '打卡' },
@@ -214,15 +214,10 @@ const PLACES = {
 // 每条线路：stops 为途经顺序（以基督城出发书写），nights 为每站住宿晚数（0 = 途经不住），
 // legs[i] 为 stops[i] → stops[i+1] 的驾车时长（分钟）。
 // type: 'main' 主线路（可切换基督城 / 皇后镇出发，自动反向或换起点）；'side' 单独行程（fixed = 固定出发城市）
-// 免费星空 / 极光拍摄服务（stars: true 的地点提供）
+// 免费星空 / 极光拍摄服务：只在南岛中线、东线、中线+东线的最终报价里显示
 const STAR_SERVICE = {
   title: '免费星空 / 极光拍摄服务',
-  detail: '在住宿当晚前往附近暗空地点，为客人拍摄星空人像与银河照片，南半球极光（Aurora Australis）出现时一并拍摄。',
-  disclaimer: '本服务免费赠送，不作保证：星空与极光能否看到、拍到，取决于当晚天气、云量、月相及太阳活动等自然条件；如遇天气不佳将取消，恕不另行补偿。',
-  // 只拍星空（西线、以及 stars: 'starsOnly' 的地点）
-  titleStars: '免费星空拍摄服务',
-  detailStars: '在住宿当晚前往附近暗空地点，为客人拍摄星空人像与银河照片（仅拍星空）。',
-  disclaimerStars: '本服务免费赠送，不作保证：星空能否看到、拍到，取决于当晚天气、云量及月相等自然条件；如遇天气不佳将取消，恕不另行补偿。',
+  text: '星空主要在蒂卡波湖、特威泽尔拍摄；极光可在蒂卡波湖、特威泽尔、奥马鲁、但尼丁、皇后镇、瓦纳卡拍摄。并非每个地点都拍，视天气和月相而定，拍到即完成。',
 };
 
 // 可住宿地点及可选晚数 [最少, 最多]；线路里 nights 为默认晚数，客人可在范围内调整
@@ -235,25 +230,25 @@ const NIGHT_RANGE = {
 };
 
 const ROUTES = [
-  { id: 'central', type: 'main', stars: true, name: '中线', sub: '湖光雪山 · 经典首选', color: '#2f6fde',
+  { id: 'central', type: 'main', starService: true, name: '中线', sub: '湖光雪山 · 经典首选', color: '#2f6fde',
     desc: '穿越麦肯齐盆地的蓝色湖泊，抵达库克山脚，再经瓦纳卡到皇后镇。南岛雪山湖泊精华最集中的一条线。',
     stops:  ['chc', 'tek', 'mtc', 'twz', 'wan', 'zqn'],
     nights: [1, 1, 0, 1, 1, 2],
     legs:   [180, 75, 50, 110, 60],
     legNotes: ['', '', '白天游览库克山，晚上回特威泽尔住宿看星空', '途经林迪斯山口 Lindis Pass', '经皇冠山公路 Crown Range'] },
-  { id: 'east', type: 'main', stars: true, name: '东线', sub: '海岸野生动物 · 慢节奏', color: '#e2780e',
+  { id: 'east', type: 'main', starService: true, name: '东线', sub: '海岸野生动物 · 慢节奏', color: '#e2780e',
     desc: '沿太平洋海岸南下：奥马鲁企鹅、但尼丁苏格兰风情老城，再穿过中奥塔哥直达皇后镇。',
     stops:  ['chc', 'oam', 'dun', 'zqn'],
     nights: [1, 1, 1, 1],
     legs:   [210, 100, 225],
     legNotes: ['', '', '穿越中奥塔哥 Central Otago'] },
-  { id: 'west', type: 'main', stars: true, starsOnly: true, name: '西线', sub: '冰川雨林 · 越野风光', color: '#1a9c6b',
+  { id: 'west', type: 'main', name: '西线', sub: '冰川雨林 · 越野风光', color: '#1a9c6b',
     desc: '翻越亚瑟隘口到塔斯曼海岸，一路南下：千层饼岩、绿玉之乡、两大冰川、哈斯特山口，抵达瓦纳卡与皇后镇。',
     stops:  ['chc', 'art', 'gry', 'pun', 'hok', 'fra', 'fox', 'haa', 'wan', 'zqn'],
     nights: [1, 0, 1, 0, 0, 0, 1, 0, 1, 2],
     legs:   [120, 90, 45, 75, 120, 30, 120, 135, 60],
     legNotes: ['途经城堡山', '', '', '', '', '', '', '哈斯特山口，沿途蓝池', '经皇冠山公路'] },
-  { id: 'loop', type: 'main', stars: true, loop: true, name: '中线+东线', sub: '南岛环线 · 一次看全', color: '#7c3aed',
+  { id: 'loop', type: 'main', starService: true, loop: true, name: '中线+东线', sub: '南岛环线 · 一次看全', color: '#7c3aed',
     desc: '中线与东线连成一个环：内陆走雪山湖泊，海岸看野生动物，起点终点同一城市，免去单程还车 / 回程机票的麻烦。',
     stops:  ['chc', 'tek', 'mtc', 'twz', 'wan', 'zqn', 'dun', 'oam', 'chc'],
     nights: [1, 1, 0, 1, 1, 2, 1, 1, 0],
