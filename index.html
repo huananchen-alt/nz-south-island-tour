@@ -14,7 +14,17 @@
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; }
   body { background: var(--bg); color: var(--ink); font: 14px/1.55 -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif; }
-  .app { display: grid; grid-template-columns: 440px 1fr; height: 100vh; }
+  .app { --aw: 440px; display: grid; grid-template-columns: var(--aw) 1fr; height: 100vh; transition: grid-template-columns .3s ease; }
+  .app.half { --aw: 50vw; }
+  .app.full { --aw: 100vw; }
+  .app.full aside > * { width: 100%; max-width: 980px; margin-left: auto; margin-right: auto; }
+  /* 左侧信息栏大小：标准 / 半屏 / 全屏 */
+  .sizer { position: fixed; z-index: 1200; top: 92px; left: calc(var(--aw) + 10px); display: flex; flex-direction: column; gap: 2px; background: rgba(255,255,255,.96); border-radius: 10px; padding: 3px; box-shadow: 0 2px 10px rgba(0,0,0,.2); transition: left .3s ease; }
+  .sizer button { border: 0; background: transparent; border-radius: 7px; padding: 4px 7px; font: inherit; font-size: 12px; font-weight: 600; color: var(--muted); cursor: pointer; white-space: nowrap; }
+  .sizer button:hover { background: var(--soft); color: var(--ink); }
+  .sizer button.on { background: var(--ink); color: #fff; }
+  .app.full .sizer { left: auto; right: 22px; top: 10px; flex-direction: row; }
+  .mapwrap { min-width: 0; overflow: hidden; }
   aside { background: var(--panel); border-right: 1px solid var(--line); overflow-y: auto; display: flex; flex-direction: column; }
   #map { height: 100%; background: #dfe8ec; }
 
@@ -147,6 +157,13 @@
   .agewarn { display: block; font-size: 11px; color: #b45309; margin-top: 2px; }
   .pcnt { display: block; font-size: 11px; color: var(--muted); white-space: nowrap; margin-top: 2px; }
   .pcnt select { font: inherit; font-size: 11px; padding: 0 2px; border: 1px solid var(--line); border-radius: 4px; }
+  .acts .ap { display: block; font-size: 13px; color: var(--ink); }
+  .acts .ap small { font-weight: 400; color: var(--muted); font-size: 11px; }
+  .acts .ap.free, .quote .free, .afee.free { color: var(--ok); }
+  .afee { margin-left: auto; font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .quote .ln.act { font-size: 12.5px; padding: 2px 0 2px 12px; border-left: 2px solid var(--line); margin-left: 2px; }
+  .quote .ln.act span:last-child { white-space: nowrap; padding-left: 8px; }
+  .quote .ln small { font-size: 11px; }
   .acts td.p a { font-size: 12px; font-weight: 600; color: var(--c, var(--accent)); text-decoration: none; white-space: nowrap; }
   .fine { font-size: 11px; color: var(--muted); margin: 10px 0 0; }
 
@@ -196,12 +213,31 @@
   .leaflet-tooltip.nametip { background: transparent; border: 0; box-shadow: none; font-weight: 700; font-size: 12px; color: #1d2327; text-shadow: 0 0 3px #fff, 0 0 3px #fff, 0 0 3px #fff; padding: 0; }
   .leaflet-tooltip.nametip::before { display: none; }
   .leaflet-popup-content { margin: 12px 14px; font-size: 13px; line-height: 1.5; min-width: 220px; }
-  .pp h3 { margin: 0; font-size: 16px; }
-  .pp .en { color: var(--muted); font-size: 12px; }
-  .pp .pph { margin-top: 6px; font-size: 12px; color: var(--muted); }
-  .pp ul { margin: 6px 0 0; padding-left: 16px; }
-  .pp .meta { margin-top: 6px; font-weight: 600; }
-  .pp .hbtn { display: block; width: 100%; margin-top: 10px; border: 0; background: var(--soft); border-radius: 10px; padding: 8px; font: inherit; font-weight: 600; color: var(--ink); cursor: pointer; }
+  /* 地图弹窗：线路色渐变标题 + 柔和卡片 */
+  .ppop .leaflet-popup-content-wrapper { padding: 0; border-radius: 16px; overflow: hidden; background: linear-gradient(180deg, #ffffff, #faf8f3); box-shadow: 0 14px 40px rgba(16,24,40,.28), 0 2px 6px rgba(16,24,40,.12); }
+  .ppop .leaflet-popup-content { margin: 0; width: 270px !important; }
+  .ppop .leaflet-popup-tip { background: #faf8f3; box-shadow: 0 6px 14px rgba(16,24,40,.2); }
+  .ppop a.leaflet-popup-close-button { color: rgba(255,255,255,.9); top: 8px; right: 8px; width: 24px; height: 24px; line-height: 22px; border-radius: 50%; background: rgba(255,255,255,.18); font-size: 17px; }
+  .ppop a.leaflet-popup-close-button:hover { background: rgba(255,255,255,.32); color: #fff; }
+  .pp { --c: #1d2327; }
+  .pp .phd { position: relative; padding: 14px 40px 12px 16px; color: #fff; overflow: hidden;
+    background: radial-gradient(120% 140% at 100% 0%, rgba(255,255,255,.28), transparent 55%), linear-gradient(135deg, var(--c), color-mix(in srgb, var(--c) 55%, #0b1020)); }
+  .pp .phd::after { content: ''; position: absolute; right: -24px; bottom: -34px; width: 110px; height: 110px; border-radius: 50%; background: rgba(255,255,255,.08); }
+  .pp h3 { margin: 0; font-size: 18px; letter-spacing: .5px; text-shadow: 0 1px 2px rgba(0,0,0,.25); }
+  .pp .en { font-size: 12px; opacity: .85; letter-spacing: .3px; }
+  .pp .pbd { padding: 12px 16px 14px; }
+  .pp .intro2 { color: #3d464f; }
+  .pp .meta { display: inline-block; margin-top: 8px; padding: 2px 10px; border-radius: 99px; font-size: 12px; font-weight: 700; color: var(--c); background: color-mix(in srgb, var(--c) 12%, white); border: 1px solid color-mix(in srgb, var(--c) 25%, white); }
+  .pp .pph { margin-top: 10px; font-size: 11px; font-weight: 700; color: var(--muted); letter-spacing: 1px; }
+  .pp ul { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 4px; }
+  .pp li { display: flex; gap: 8px; align-items: baseline; padding: 6px 9px; border-radius: 9px; background: color-mix(in srgb, var(--c) 6%, white); border-left: 3px solid var(--c); font-size: 12.5px; }
+  .pp li span { flex: 1; }
+  .pp li small { color: var(--muted); white-space: nowrap; }
+  .pp li b { white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .pp li b.free { color: var(--ok); }
+  .pp .hbtn { display: block; width: 100%; margin-top: 12px; border: 0; border-radius: 10px; padding: 9px; font: inherit; font-weight: 700; color: #fff; cursor: pointer;
+    background: linear-gradient(135deg, var(--c), color-mix(in srgb, var(--c) 60%, #0b1020)); box-shadow: 0 4px 12px color-mix(in srgb, var(--c) 35%, transparent); transition: transform .15s, box-shadow .15s; }
+  .pp .hbtn:hover { transform: translateY(-1px); box-shadow: 0 6px 16px color-mix(in srgb, var(--c) 45%, transparent); }
 
   /* 住宿推荐面板 */
   .sheet { position: fixed; inset: 0; z-index: 3000; background: rgba(0,0,0,.35); display: flex; align-items: flex-end; justify-content: center; }
@@ -223,7 +259,10 @@
   .sheet .empty { text-align: center; color: var(--muted); padding: 28px 0 18px; }
 
   @media (max-width: 860px) {
-    .app { grid-template-columns: 1fr; grid-template-rows: 46vh 1fr; height: 100dvh; }
+    .app, .app.half, .app.full { grid-template-columns: 1fr; grid-template-rows: 46vh 1fr; height: 100dvh; transition: grid-template-rows .3s ease; }
+    .app.full { grid-template-rows: 0 1fr; }
+    .sizer, .app.full .sizer { top: 10px; right: 10px; left: auto; flex-direction: row; }
+    .sizer .half-btn { display: none; }
     .mapwrap { order: -1; }
     aside { border-right: 0; border-top: 1px solid var(--line); }
     header { padding: 14px 16px 6px; }
@@ -241,6 +280,11 @@
 </head>
 <body>
 <div class="app">
+  <div class="sizer" id="sizer" title="调整左侧信息栏大小">
+    <button type="button" data-size="" class="on">◧ 标准</button>
+    <button type="button" data-size="half" class="half-btn">◫ 半屏</button>
+    <button type="button" data-size="full">▣ 全屏</button>
+  </div>
   <aside id="side">
     <header>
       <h1>🇳🇿 新西兰南北岛包车之旅</h1>
@@ -269,11 +313,11 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://js.hcaptcha.com/1/api.js?render=explicit&hl=zh-CN" async defer></script>
-<script src="data.js?v=202610182304"></script>
-<script src="geo.js?v=202610182304"></script>
+<script src="data.js?v=202610191206"></script>
+<script src="geo.js?v=202610191206"></script>
 <script>
 // 页面版本（由 bump-version.sh 更新）。微信等浏览器会缓存旧页面，打开时和提交前都检查一次，过期就自动刷新
-const PAGE_VERSION = '202610182304';
+const PAGE_VERSION = '202610191206';
 const latestVersion = () => fetch(`version.json?t=${Date.now()}`, { cache: 'no-store' }).then(r => r.json()).then(d => d.v).catch(() => null);
 function reloadTo(v) {
   try { if (sessionStorage.getItem('reloaded') === v) return false; sessionStorage.setItem('reloaded', v); } catch {}
@@ -494,12 +538,12 @@ function popupHtml(id, r) {
   // 只列出客人在当前线路里已勾选的活动
   const picks = (r && state.picks[r.id]) || {};
   const chosen = p.acts.map((a, k) => picks[id + ':' + k] ? a : null).filter(Boolean);
-  const top = chosen.map(a => `<li>✓ ${a.n} · ${a.d}</li>`).join('');
-  return `<div class="pp"><h3>${p.name}</h3><div class="en">${p.en}</div>
-    <div style="margin-top:6px">${p.intro}</div>
-    <div class="meta">${n ? `住 ${n} 晚` : r && r.stops[0] === id ? '出发日无住宿' : '途经 / 一日游，不住宿'}</div>
+  const top = chosen.map(a => `<li><span>${a.n} <small>⏱ ${a.d}</small></span><b class="${isPaid(a) ? '' : 'free'}">${isPaid(a) ? mr(priceOf(a)) + '/人' : '免费'}</b></li>`).join('');
+  return `<div class="pp" style="--c:${r ? r.color : '#1d2327'}"><div class="phd"><h3>${p.name}</h3><div class="en">${p.en}</div></div>
+    <div class="pbd"><div class="intro2">${p.intro}</div>
+    <div class="meta">${n ? `🛏 住 ${n} 晚` : r && r.stops[0] === id ? '出发日无住宿' : '途经 / 一日游，不住宿'}</div>
     ${r ? (chosen.length ? `<div class="pph">已选活动</div><ul>${top}</ul>` : '<div class="pph">尚未勾选活动</div>') : ''}
-    ${p.stay[1] > 0 ? `<button type="button" class="hbtn" data-hotels="${id}">🏨 住宿推荐${(p.hotels || []).length ? ` (${p.hotels.length})` : ''}</button>` : ''}</div>`;
+    ${p.stay[1] > 0 ? `<button type="button" class="hbtn" data-hotels="${id}">🏨 住宿推荐${(p.hotels || []).length ? ` (${p.hotels.length})` : ''}</button>` : ''}</div></div>`;
 }
 
 /* ---------- 住宿推荐面板（数据见 data.js 里各地点的 hotels） ---------- */
@@ -548,7 +592,7 @@ function drawActive() {
         html: `<div class="pin ${showAll ? 'small' : ''}" style="background:${r.color}">${label}</div>` });
       L.marker([p.lat, p.lng], { icon, riseOnHover: true }).addTo(activeLayer)
         .bindTooltip(p.name, { permanent: true, direction: 'right', offset: [showAll ? 8 : 14, 0], className: 'nametip' })
-        .bindPopup(() => popupHtml(id, showAll ? null : active()))
+        .bindPopup(() => popupHtml(id, showAll ? null : active()), { className: 'ppop', maxWidth: 300 })
         .on('click', () => { if (!showAll) markStop(r.stops.indexOf(id)); });
     });
     if (!showAll) {
@@ -593,7 +637,7 @@ function focusStop(i, zoom = 10) {
     line.bringToFront();
   }
   map.flyTo([p.lat, p.lng], zoom, { duration: 1.2 });
-  L.popup({ offset: [0, -12] }).setLatLng([p.lat, p.lng]).setContent(popupHtml(id, r)).openOn(map);
+  L.popup({ offset: [0, -12], className: 'ppop', maxWidth: 300 }).setLatLng([p.lat, p.lng]).setContent(popupHtml(id, r)).openOn(map);
   markStop(i);
 }
 
@@ -805,7 +849,7 @@ function airportLegs(r, days, fl) {
   const sel = state.airport[r.id] || {}, n = fleetCount(fl), free = days >= freeDays(r), out = [];
   [['pickup', '接机', r.stops[0], '抵达当天或前一天'], ['dropoff', '送机', r.stops[r.stops.length - 1], '离开当天']].forEach(([k, label, city, when]) => {
     if (!(city in AIRPORT.fee)) return;
-    out.push({ k, label, city, when, on: !!sel[k], fee: free ? 0 : AIRPORT.fee[city] * n, unit: AIRPORT.fee[city] });
+    out.push({ k, label, city, when, on: !!sel[k], fee: free ? 0 : AIRPORT.fee[city] * n, unit: AIRPORT.fee[city], n });
   });
   return out;
 }
@@ -857,8 +901,9 @@ function airportHtml(r, legs, days) {
   if (!legs.length) return '';
   return `<section><h2>✈️ 接送机</h2><div class="addons">${legs.map(a => `
     <label class="addon ${a.on ? 'on' : ''}" style="--c:${r.color}"><input type="checkbox" data-air="${a.k}" ${a.on ? 'checked' : ''}>
-      <span><b>${a.label} · ${PLACES[a.city].name}机场</b>（${a.when}）<small>${a.fee ? '包车不满 ' + freeDays(r) + ' 天，按次收费，计入总报价' : `包车满 ${freeDays(r)} 天，免费`}</small></span></label>`).join('')}
-  </div><p class="fine" style="margin:8px 0 0">包车满 ${freeDays(r)} 天接送机免费；不满 ${freeDays(r)} 天按每辆车每趟收费，计入总报价。当前包车 ${days} 天。</p></section>`;
+      <span><b>${a.label} · ${PLACES[a.city].name}机场</b>（${a.when}）<small>${a.fee ? `${money(a.unit)}/车/趟${a.n > 1 ? ` × ${a.n} 辆` : ''} · 包车不满 ${freeDays(r)} 天，计入总报价` : `${money(a.unit)}/车/趟 · 包车满 ${freeDays(r)} 天，免费`}</small></span>
+      <span class="afee ${a.fee ? '' : 'free'}">${a.fee ? money(a.fee) : '免费'}</span></label>`).join('')}
+  </div><p class="fine" style="margin:8px 0 0">接送机收费：${Object.entries(AIRPORT.fee).map(([id, f]) => `${PLACES[id].name}机场 ${money(f)}`).join('、')}（每辆车每趟）。北岛包车满 ${AIRPORT.minDaysN} 天、南岛满 ${AIRPORT.minDays} 天免费。当前包车 ${days} 天。</p></section>`;
 }
 
 function optionalHtml(r) {
@@ -1029,7 +1074,7 @@ function renderRoute(r) {
         const cnt = picks[key] ? pickCount(picks[key]) : 0;
         return `<tr><td class="ck"><input type="checkbox" data-k="${key}" ${picks[key] ? 'checked' : ''} title="加入报价"></td>
           <td>${a.hot ? '<span class="hot">🔥 强烈推荐</span>' : ''}${a.n}<span class="t">${a.t}</span>${a.age ? `<span class="agewarn">⚠️ ${a.age}</span>` : ''}</td><td class="d">⏱ ${a.d}</td>
-          <td class="p">${a.u ? `<a href="${a.u}" target="_blank" rel="noopener" title="打开官方网站">官网 ↗</a>` : ''}${cnt && isPaid(a) ? `<label class="pcnt">参加 <select data-kc="${key}">${Array.from({ length: state.people }, (_, i) => i + 1).map(n => `<option value="${n}" ${n === cnt ? 'selected' : ''}>${n}</option>`).join('')}</select> 人</label>` : ''}</td></tr>`;
+          <td class="p"><span class="ap ${isPaid(a) ? '' : 'free'}">${isPaid(a) ? `${mr(priceOf(a))}<small>/人</small>` : '免费'}</span>${a.u ? `<a href="${a.u}" target="_blank" rel="noopener" title="打开官方网站">官网 ↗</a>` : ''}${cnt && isPaid(a) ? `<label class="pcnt">参加 <select data-kc="${key}">${Array.from({ length: state.people }, (_, i) => i + 1).map(n => `<option value="${n}" ${n === cnt ? 'selected' : ''}>${n}</option>`).join('')}</select> 人</label>` : ''}</td></tr>`;
       }).join('')}</table>`}
     </div>`;
     if (i < r.legs.length) {
@@ -1059,11 +1104,13 @@ function renderRoute(r) {
       <div class="quote">
         <div class="ln"><span>包车 ${fleetLabel(fl)} × ${days} 天${freeDayNote(r) ? `<br><small>${freeDayNote(r)}，不算包车日</small>` : ''}</span><span></span></div>
         ${dh ? `<div class="ln"><span>司导及车辆空驶费 ${dhLegs.length} 段 × ${fleetCount(fl)} 辆 × ${money(DEADHEAD.fee)}<br><small>${dhLegs.join('；')}</small></span><span>${money(dh)}</span></div>` : ''}
-        ${airOn.map(a => `<div class="ln"><span>${a.label}（${PLACES[a.city].name}机场）</span><span>${a.fee ? '计入总价' : '免费'}</span></div>`).join('')}
+        ${airOn.map(a => `<div class="ln"><span>${a.label}（${PLACES[a.city].name}机场）<br><small>${a.fee ? `${money(a.unit)}/车/趟${a.n > 1 ? ` × ${a.n} 辆` : ''}` : `包车满 ${freeDays(r)} 天免费（原价 ${money(a.unit)}/车/趟）`}</small></span><span class="${a.fee ? '' : 'free'}">${a.fee ? money(a.fee) : '免费'}</span></div>`).join('')}
         ${pre ? `<div class="ln"><span>抵达后住宿（${pre.name}）${pre.nights} 晚 × ${state.people} 人</span><span>计入总价</span></div>` : ''}
         ${pre && pre.carOn ? `<div class="ln"><span>包车出发前在${pre.name}用车 ${pre.carDays} 天</span><span>计入总价</span></div>` : ''}
         <div class="ln"><span>住宿 ${s.nights} 晚 × ${state.people} 人</span><span>计入总价</span></div>
-        <div class="ln"><span>已选活动 ${picked.length} 项</span><span>${picked.length ? '计入总价' : ''}</span></div>
+        <div class="ln"><span>已选活动 ${picked.length} 项</span><span>${picked.length ? mr(act) : ''}</span></div>
+        ${picked.map(k => { const [id, idx] = k.split(':'), a = PLACES[id].acts[idx], n = pickCount(picks[k]);
+          return `<div class="ln act"><span>${PLACES[id].name} · ${a.n}<br><small>${isPaid(a) ? `${n} 人 × ${mr(priceOf(a))}/人` : '免费活动'}</small></span><span class="${isPaid(a) ? '' : 'free'}">${isPaid(a) ? mr(rmul(priceOf(a), n)) : '免费'}</span></div>`; }).join('')}
         ${star ? `<div class="starq"><b>✨ ${STAR_SERVICE.title} · 免费</b><span>${STAR_SERVICE.text}</span></div>` : ''}
         <div class="ln tot"><span>报价范围（NZD）</span><span>${mr(total)}</span></div>
         <p class="qnote">${QUOTE_NOTE}</p>
@@ -1216,6 +1263,17 @@ function setRoute(id) {
   render(); drawActive(); updateTourLbl();
   $('aside').scrollTop = 0;
 }
+
+/* ---------- 左侧信息栏大小：标准 / 半屏 / 全屏 ---------- */
+function setSize(k) {
+  const app = $('.app');
+  app.classList.remove('half', 'full');
+  if (k) app.classList.add(k);
+  document.querySelectorAll('#sizer [data-size]').forEach(b => b.classList.toggle('on', b.dataset.size === k));
+  // 地图容器大小变了，动画结束后让 Leaflet 重新计算
+  setTimeout(() => map.invalidateSize(), 320);
+}
+document.querySelectorAll('#sizer [data-size]').forEach(b => b.onclick = () => setSize(b.dataset.size));
 
 /* ---------- 讲解模式 ---------- */
 function updateTourLbl() {
