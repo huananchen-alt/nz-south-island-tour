@@ -196,6 +196,7 @@
   .leaflet-popup-content { margin: 12px 14px; font-size: 13px; line-height: 1.5; min-width: 220px; }
   .pp h3 { margin: 0; font-size: 16px; }
   .pp .en { color: var(--muted); font-size: 12px; }
+  .pp .pph { margin-top: 6px; font-size: 12px; color: var(--muted); }
   .pp ul { margin: 6px 0 0; padding-left: 16px; }
   .pp .meta { margin-top: 6px; font-weight: 600; }
   .pp .hbtn { display: block; width: 100%; margin-top: 10px; border: 0; background: var(--soft); border-radius: 10px; padding: 8px; font: inherit; font-weight: 600; color: var(--ink); cursor: pointer; }
@@ -266,11 +267,11 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://js.hcaptcha.com/1/api.js?render=explicit&hl=zh-CN" async defer></script>
-<script src="data.js?v=202610182211"></script>
-<script src="geo.js?v=202610182211"></script>
+<script src="data.js?v=202610182215"></script>
+<script src="geo.js?v=202610182215"></script>
 <script>
 // 页面版本（由 bump-version.sh 更新）。微信等浏览器会缓存旧页面，打开时和提交前都检查一次，过期就自动刷新
-const PAGE_VERSION = '202610182211';
+const PAGE_VERSION = '202610182215';
 const latestVersion = () => fetch(`version.json?t=${Date.now()}`, { cache: 'no-store' }).then(r => r.json()).then(d => d.v).catch(() => null);
 function reloadTo(v) {
   try { if (sessionStorage.getItem('reloaded') === v) return false; sessionStorage.setItem('reloaded', v); } catch {}
@@ -483,11 +484,14 @@ function popupHtml(id, r) {
   const p = PLACES[id];
   const idx = r ? r.stops.map((s, i) => s === id ? i : -1).filter(i => i >= 0) : [];
   const n = idx.reduce((s, i) => s + r.nights[i], 0);
-  const top = p.acts.slice(0, 3).map(a => `<li>${a.n} · ${a.d}</li>`).join('');
+  // 只列出客人在当前线路里已勾选的活动
+  const picks = (r && state.picks[r.id]) || {};
+  const chosen = p.acts.map((a, k) => picks[id + ':' + k] ? a : null).filter(Boolean);
+  const top = chosen.map(a => `<li>✓ ${a.n} · ${a.d}</li>`).join('');
   return `<div class="pp"><h3>${p.name}</h3><div class="en">${p.en}</div>
     <div style="margin-top:6px">${p.intro}</div>
     <div class="meta">${n ? `住 ${n} 晚` : '途经 / 一日游，不住宿'}</div>
-    <ul>${top}</ul>
+    ${r ? (chosen.length ? `<div class="pph">已选活动</div><ul>${top}</ul>` : '<div class="pph">尚未勾选活动</div>') : ''}
     ${p.stay[1] > 0 ? `<button type="button" class="hbtn" data-hotels="${id}">🏨 住宿推荐${(p.hotels || []).length ? ` (${p.hotels.length})` : ''}</button>` : ''}</div>`;
 }
 
@@ -537,7 +541,7 @@ function drawActive() {
         html: `<div class="pin ${showAll ? 'small' : ''}" style="background:${r.color}">${label}</div>` });
       L.marker([p.lat, p.lng], { icon, riseOnHover: true }).addTo(activeLayer)
         .bindTooltip(p.name, { permanent: true, direction: 'right', offset: [showAll ? 8 : 14, 0], className: 'nametip' })
-        .bindPopup(popupHtml(id, showAll ? null : r))
+        .bindPopup(() => popupHtml(id, showAll ? null : active()))
         .on('click', () => { if (!showAll) markStop(r.stops.indexOf(id)); });
     });
     if (!showAll) {
