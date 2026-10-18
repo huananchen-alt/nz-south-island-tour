@@ -269,7 +269,7 @@ const ROUTES = [
     legs:   [180, 75, 50, 110, 60, 225, 100, 210],
     legNotes: ['', '', '白天游览库克山，晚上回特威泽尔住宿看星空', '途经林迪斯山口 Lindis Pass', '经皇冠山公路 Crown Range', '穿越中奥塔哥 Central Otago', '', ''] },
   // 北岛：三个固定套餐（晚数固定，不可调整）；去程途经霍比特村，回程途经怀托摩萤火虫洞（optionalStops：客人可选择不去）
-  { id: 'north-akl', type: 'north', fixed: 'akl', stayAtStart: true, nightRange: { akl: [2, 7] }, tab: '奥克兰周边', name: '北岛 · 奥克兰周边游', sub: '只住奥克兰', color: '#be123c',
+  { id: 'north-akl', type: 'north', fixed: 'akl', stayAtStart: true, nightRange: { akl: [1, 10] }, tab: '奥克兰周边', name: '北岛 · 奥克兰周边游', sub: '只住奥克兰', color: '#be123c',
     desc: '全程住在奥克兰，每天从酒店出发游览市区和周边：天空塔、激流岛酒庄、朗伊托托火山岛、穆里怀 / 皮哈黑沙滩等，住几晚可自选。',
     stops:  ['akl'],
     nights: [3],
