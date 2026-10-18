@@ -269,11 +269,11 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://js.hcaptcha.com/1/api.js?render=explicit&hl=zh-CN" async defer></script>
-<script src="data.js?v=202610182240"></script>
-<script src="geo.js?v=202610182240"></script>
+<script src="data.js?v=202610182250"></script>
+<script src="geo.js?v=202610182250"></script>
 <script>
 // 页面版本（由 bump-version.sh 更新）。微信等浏览器会缓存旧页面，打开时和提交前都检查一次，过期就自动刷新
-const PAGE_VERSION = '202610182240';
+const PAGE_VERSION = '202610182250';
 const latestVersion = () => fetch(`version.json?t=${Date.now()}`, { cache: 'no-store' }).then(r => r.json()).then(d => d.v).catch(() => null);
 function reloadTo(v) {
   try { if (sessionStorage.getItem('reloaded') === v) return false; sessionStorage.setItem('reloaded', v); } catch {}
@@ -440,6 +440,8 @@ const fromTo = r => r.stops[0] === r.stops[r.stops.length - 1]
 // 包车天数：在机场城市（奥克兰 / 基督城 / 皇后镇）开始并住宿时，抵达当天只接机；
 // 在机场城市结束并住宿时，离开当天只送机；这两天都不算包车日
 const atAirport = id => id in AIRPORT.fee;
+// 接送机免费门槛：北岛包车满 2 天、南岛满 3 天
+const freeDays = r => islandOf(r) === 'N' ? AIRPORT.minDaysN : AIRPORT.minDays;
 const arrivalFree = r => r.stops.length > 1 && atAirport(r.stops[0]) && r.nights[0] > 0;
 const departFree = r => r.stops.length > 1 && atAirport(r.stops[r.stops.length - 1]) && r.nights[r.nights.length - 1] > 0;
 const freeDayNote = r => [arrivalFree(r) && `抵达${PLACES[r.stops[0]].name}当天只接机`, departFree(r) && `离开${PLACES[r.stops[r.stops.length - 1]].name}当天只送机`].filter(Boolean).join('、');
@@ -798,7 +800,7 @@ function bindInquiry() {
 
 // 接送机：起点 / 终点是有机场服务的城市时可选
 function airportLegs(r, days, fl) {
-  const sel = state.airport[r.id] || {}, n = fleetCount(fl), free = days >= AIRPORT.minDays, out = [];
+  const sel = state.airport[r.id] || {}, n = fleetCount(fl), free = days >= freeDays(r), out = [];
   [['pickup', '接机', r.stops[0], '抵达当天或前一天'], ['dropoff', '送机', r.stops[r.stops.length - 1], '离开当天']].forEach(([k, label, city, when]) => {
     if (!(city in AIRPORT.fee)) return;
     out.push({ k, label, city, when, on: !!sel[k], fee: free ? 0 : AIRPORT.fee[city] * n, unit: AIRPORT.fee[city] });
@@ -853,8 +855,8 @@ function airportHtml(r, legs, days) {
   if (!legs.length) return '';
   return `<section><h2>✈️ 接送机</h2><div class="addons">${legs.map(a => `
     <label class="addon ${a.on ? 'on' : ''}" style="--c:${r.color}"><input type="checkbox" data-air="${a.k}" ${a.on ? 'checked' : ''}>
-      <span><b>${a.label} · ${PLACES[a.city].name}机场</b>（${a.when}）<small>${a.fee ? '包车不满 ' + AIRPORT.minDays + ' 天，按次收费，计入总报价' : `包车满 ${AIRPORT.minDays} 天，免费`}</small></span></label>`).join('')}
-  </div><p class="fine" style="margin:8px 0 0">包车满 ${AIRPORT.minDays} 天接送机免费；不满 ${AIRPORT.minDays} 天按每辆车每趟收费，计入总报价。当前包车 ${days} 天。</p></section>`;
+      <span><b>${a.label} · ${PLACES[a.city].name}机场</b>（${a.when}）<small>${a.fee ? '包车不满 ' + freeDays(r) + ' 天，按次收费，计入总报价' : `包车满 ${freeDays(r)} 天，免费`}</small></span></label>`).join('')}
+  </div><p class="fine" style="margin:8px 0 0">包车满 ${freeDays(r)} 天接送机免费；不满 ${freeDays(r)} 天按每辆车每趟收费，计入总报价。当前包车 ${days} 天。</p></section>`;
 }
 
 function optionalHtml(r) {

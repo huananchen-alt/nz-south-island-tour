@@ -353,7 +353,8 @@ const DEADHEAD = { base: 'chc', fee: 500 };
 
 // 接送机：行程开始当天接机、结束当天送机（仅奥克兰 / 基督城 / 皇后镇）
 // 包车满 minDays 天免费；不满按每辆车每趟收费
-const AIRPORT = { minDays: 3, fee: { akl: 100, chc: 60, zqn: 60 } };
+// minDays = 南岛包车满几天免费；minDaysN = 北岛包车满几天免费
+const AIRPORT = { minDays: 3, minDaysN: 2, fee: { akl: 100, chc: 60, zqn: 60 } };
 
 // 包车费用按区间计入总价（页面不显示单价）：每辆车每天 ± spread
 const CHARTER_RANGE = { spread: 100 };
