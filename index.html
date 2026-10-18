@@ -269,11 +269,11 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://js.hcaptcha.com/1/api.js?render=explicit&hl=zh-CN" async defer></script>
-<script src="data.js?v=202610182250"></script>
-<script src="geo.js?v=202610182250"></script>
+<script src="data.js?v=202610182300"></script>
+<script src="geo.js?v=202610182300"></script>
 <script>
 // 页面版本（由 bump-version.sh 更新）。微信等浏览器会缓存旧页面，打开时和提交前都检查一次，过期就自动刷新
-const PAGE_VERSION = '202610182250';
+const PAGE_VERSION = '202610182300';
 const latestVersion = () => fetch(`version.json?t=${Date.now()}`, { cache: 'no-store' }).then(r => r.json()).then(d => d.v).catch(() => null);
 function reloadTo(v) {
   try { if (sessionStorage.getItem('reloaded') === v) return false; sessionStorage.setItem('reloaded', v); } catch {}
@@ -412,12 +412,13 @@ function withSkips(r) {
 const buildOR = () => { OR = [...ROUTES.map(r => withNights(withAddons(withSkips(orient(r))))), withNights(customRoute('S')), withNights(customRoute('N'))]; };
 // 自由组合里只途经、不住宿的地点
 const CUSTOM_PASS = ['hob', 'wtm', 'mil'];
-const nightRange = (r, id) => r.fixedNights ? null : r.type === 'custom' && CUSTOM_PASS.includes(id) ? null : NIGHT_RANGE[id] || (r.type === 'custom' && PLACES[id].stay[1] > 0 ? [0, 2] : null);
+const nightRange = (r, id) => r.nightRange && r.nightRange[id] ? r.nightRange[id] : r.fixedNights ? null : r.type === 'custom' && CUSTOM_PASS.includes(id) ? null : NIGHT_RANGE[id] || (r.type === 'custom' && PLACES[id].stay[1] > 0 ? [0, 2] : null);
 
 // 客人选择的住宿晚数（只对默认要住宿、且在 NIGHT_RANGE 里的地点生效）
 function withNights(r) {
   // 所有线路（含自由组合）：出发城市出发日无住宿，抵达当天接机后直接开往第二站，第一晚住第二站
-  r = { ...r, nights: r.nights.map((n, i) => i === 0 ? 0 : n) };
+  // 例外：奥克兰周边游这类只住出发城市的线路（stayAtStart）
+  if (!r.stayAtStart) r = { ...r, nights: r.nights.map((n, i) => i === 0 ? 0 : n) };
   return { ...r, baseNights: r.nights, nights: r.nights.map((n, i) => {
     const sel = state.nightSel[nightKey(r, r.stops[i])];
     return n > 0 && nightRange(r, r.stops[i]) && sel != null ? sel : n;
@@ -432,7 +433,8 @@ function changeNights(id, d) {
 }
 let OR = [];
 const active = () => OR.find(r => r.id === state.route);
-const fromTo = r => r.stops[0] === r.stops[r.stops.length - 1]
+const fromTo = r => r.stayAtStart ? `全程住${PLACES[r.stops[0]].name}，每天往返市区和周边`
+  : r.stops[0] === r.stops[r.stops.length - 1]
   ? `${PLACES[r.stops[0]].name}出发 · ${r.loop ? '环线' : '往返'}返回${PLACES[r.stops[0]].name}`
   : `${PLACES[r.stops[0]].name} → ${PLACES[r.stops[r.stops.length - 1]].name}`;
 
@@ -442,8 +444,8 @@ const fromTo = r => r.stops[0] === r.stops[r.stops.length - 1]
 const atAirport = id => id in AIRPORT.fee;
 // 接送机免费门槛：北岛包车满 2 天、南岛满 3 天
 const freeDays = r => islandOf(r) === 'N' ? AIRPORT.minDaysN : AIRPORT.minDays;
-const arrivalFree = r => r.stops.length > 1 && atAirport(r.stops[0]) && r.nights[0] > 0;
-const departFree = r => r.stops.length > 1 && atAirport(r.stops[r.stops.length - 1]) && r.nights[r.nights.length - 1] > 0;
+const arrivalFree = r => (r.stops.length > 1 || r.stayAtStart) && atAirport(r.stops[0]) && r.nights[0] > 0;
+const departFree = r => (r.stops.length > 1 || r.stayAtStart) && atAirport(r.stops[r.stops.length - 1]) && r.nights[r.nights.length - 1] > 0;
 const freeDayNote = r => [arrivalFree(r) && `抵达${PLACES[r.stops[0]].name}当天只接机`, departFree(r) && `离开${PLACES[r.stops[r.stops.length - 1]].name}当天只送机`].filter(Boolean).join('、');
 const charterDays = (r, s = routeStats(r)) => Math.max(1, s.days - (arrivalFree(r) ? 1 : 0) - (departFree(r) ? 1 : 0));
 
@@ -1044,8 +1046,8 @@ function renderRoute(r) {
       <p class="desc">${r.desc}</p>
       <div class="stats">
         <div class="stat"><div class="v">${s.days}天${s.nights}晚</div><div class="k">建议行程</div></div>
-        <div class="stat"><div class="v">${s.km.toLocaleString()}</div><div class="k">总里程 km</div></div>
-        <div class="stat"><div class="v">${Math.round(s.drive / 6) / 10}h</div><div class="k">纯驾车时长</div></div>
+        <div class="stat"><div class="v">${r.stayAtStart ? '—' : s.km.toLocaleString()}</div><div class="k">总里程 km</div></div>
+        <div class="stat"><div class="v">${r.stayAtStart ? '—' : Math.round(s.drive / 6) / 10 + 'h'}</div><div class="k">纯驾车时长</div></div>
         <div class="stat"><div class="v">${r.stops.length}</div><div class="k">途经站点</div></div>
       </div>
     </section>
