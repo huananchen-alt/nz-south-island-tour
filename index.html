@@ -61,6 +61,7 @@
   .stop-h .en { color: var(--muted); font-size: 12px; }
   .stop-h .tag { margin-left: auto; font-size: 12px; white-space: nowrap; text-align: right; }
   .tag .pill { display: inline-block; padding: 1px 8px; border-radius: 99px; background: var(--soft); color: var(--muted); }
+  .tag .pill.startpill { background: #fff4e0; color: #9a5800; font-weight: 600; }
   .tag .pill.stay { background: color-mix(in srgb, var(--c) 12%, white); color: var(--c); font-weight: 600; }
   .intro { color: var(--muted); font-size: 13px; margin: 8px 0 6px; }
   .acts { width: 100%; border-collapse: collapse; font-size: 13px; }
@@ -268,11 +269,11 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://js.hcaptcha.com/1/api.js?render=explicit&hl=zh-CN" async defer></script>
-<script src="data.js?v=202610182230"></script>
-<script src="geo.js?v=202610182230"></script>
+<script src="data.js?v=202610182240"></script>
+<script src="geo.js?v=202610182240"></script>
 <script>
 // 页面版本（由 bump-version.sh 更新）。微信等浏览器会缓存旧页面，打开时和提交前都检查一次，过期就自动刷新
-const PAGE_VERSION = '202610182230';
+const PAGE_VERSION = '202610182240';
 const latestVersion = () => fetch(`version.json?t=${Date.now()}`, { cache: 'no-store' }).then(r => r.json()).then(d => d.v).catch(() => null);
 function reloadTo(v) {
   try { if (sessionStorage.getItem('reloaded') === v) return false; sessionStorage.setItem('reloaded', v); } catch {}
@@ -386,7 +387,7 @@ const legTime = (a, b) => LEG_TIME[[a, b].sort().join('-')] ?? Math.max(5, Math.
 function customRoute(k) {
   const st = state.custom.stops[k].filter((id, i, a) => i === 0 || id !== a[i - 1]);
   const nights = st.map((id, i) => {
-    if (st.indexOf(id) < i || PLACES[id].stay[1] === 0 || CUSTOM_PASS.includes(id)) return 0;
+    if (i === 0 || st.indexOf(id) < i || PLACES[id].stay[1] === 0 || CUSTOM_PASS.includes(id)) return 0;
     const [lo, hi] = NIGHT_RANGE[id] || [0, 2];
     return Math.min(hi, Math.max(lo, 1));
   });
@@ -415,8 +416,8 @@ const nightRange = (r, id) => r.fixedNights ? null : r.type === 'custom' && CUST
 
 // 客人选择的住宿晚数（只对默认要住宿、且在 NIGHT_RANGE 里的地点生效）
 function withNights(r) {
-  // 南岛经典线路：起点城市不住，抵达当天接机后直接开往第二站，第一晚住第二站
-  if (r.type === 'main') r = { ...r, nights: r.nights.map((n, i) => i === 0 ? 0 : n) };
+  // 所有线路（含自由组合）：出发城市出发日无住宿，抵达当天接机后直接开往第二站，第一晚住第二站
+  r = { ...r, nights: r.nights.map((n, i) => i === 0 ? 0 : n) };
   return { ...r, baseNights: r.nights, nights: r.nights.map((n, i) => {
     const sel = state.nightSel[nightKey(r, r.stops[i])];
     return n > 0 && nightRange(r, r.stops[i]) && sel != null ? sel : n;
@@ -492,7 +493,7 @@ function popupHtml(id, r) {
   const top = chosen.map(a => `<li>✓ ${a.n} · ${a.d}</li>`).join('');
   return `<div class="pp"><h3>${p.name}</h3><div class="en">${p.en}</div>
     <div style="margin-top:6px">${p.intro}</div>
-    <div class="meta">${n ? `住 ${n} 晚` : '途经 / 一日游，不住宿'}</div>
+    <div class="meta">${n ? `住 ${n} 晚` : r && r.stops[0] === id ? '出发日无住宿' : '途经 / 一日游，不住宿'}</div>
     ${r ? (chosen.length ? `<div class="pph">已选活动</div><ul>${top}</ul>` : '<div class="pph">尚未勾选活动</div>') : ''}
     ${p.stay[1] > 0 ? `<button type="button" class="hbtn" data-hotels="${id}">🏨 住宿推荐${(p.hotels || []).length ? ` (${p.hotels.length})` : ''}</button>` : ''}</div>`;
 }
@@ -1015,7 +1016,7 @@ function renderRoute(r) {
           ? `<span class="pill">不住 <span class="nstep"><button data-nid="${id}" data-dn="1">+</button></span></span><span class="nrange">可选 ${nightRange(r, id)[0]}–${nightRange(r, id)[1]} 晚，0 = 不住宿</span>`
           : `<span class="pill stay">住 <span class="nstep"><button data-nid="${id}" data-dn="-1" ${n <= nightRange(r, id)[0] ? 'disabled' : ''}>−</button> ${n} <button data-nid="${id}" data-dn="1" ${n >= nightRange(r, id)[1] ? 'disabled' : ''}>+</button></span> 晚</span><span class="nrange">可选 ${nightRange(r, id)[0]}–${nightRange(r, id)[1]} 晚</span>`
 ) : n ? `<span class="pill stay">住 ${n} 晚</span>`
-          : `<span class="pill">${i === 0 ? '出发' : i === r.stops.length - 1 ? '终点' : '途经'}</span>`}</div>
+          : `<span class="pill ${i === 0 ? 'startpill' : ''}">${i === 0 ? '出发日无住宿' : i === r.stops.length - 1 ? '终点' : '途经'}</span>`}</div>
       </div>
       ${repeat ? `<div class="intro">再次回到${p.name}${n ? '过夜' : ''}，活动见第 ${r.stops.indexOf(id) + 1} 站。</div>` : `
       <div class="intro">${p.intro}</div>
