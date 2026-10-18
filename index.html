@@ -198,6 +198,26 @@
   .pp .en { color: var(--muted); font-size: 12px; }
   .pp ul { margin: 6px 0 0; padding-left: 16px; }
   .pp .meta { margin-top: 6px; font-weight: 600; }
+  .pp .hbtn { display: block; width: 100%; margin-top: 10px; border: 0; background: var(--soft); border-radius: 10px; padding: 8px; font: inherit; font-weight: 600; color: var(--ink); cursor: pointer; }
+
+  /* 住宿推荐面板 */
+  .sheet { position: fixed; inset: 0; z-index: 3000; background: rgba(0,0,0,.35); display: flex; align-items: flex-end; justify-content: center; }
+  .sheet[hidden] { display: none; }
+  .sheet .box { background: var(--panel); width: 100%; max-width: 520px; max-height: 75vh; overflow-y: auto; border-radius: 16px 16px 0 0; padding: 14px 16px 22px; box-shadow: 0 -8px 30px rgba(0,0,0,.2); animation: sheetUp .22s ease-out; }
+  @keyframes sheetUp { from { transform: translateY(100%); } to { transform: none; } }
+  .sheet .hd { display: flex; align-items: center; gap: 8px; }
+  .sheet .hd h3 { margin: 0; font-size: 16px; flex: 1; }
+  .sheet .x { border: 0; background: var(--soft); border-radius: 50%; width: 30px; height: 30px; font: inherit; cursor: pointer; }
+  .sheet .lvs { display: flex; gap: 6px; margin: 10px 0 4px; flex-wrap: wrap; }
+  .sheet .lvs button { border: 1px solid var(--line); background: var(--soft); border-radius: 999px; padding: 3px 12px; font: inherit; font-size: 13px; cursor: pointer; color: var(--ink); }
+  .sheet .lvs button.on { background: var(--ink); border-color: var(--ink); color: #fff; }
+  .sheet .ht { padding: 10px 0; border-bottom: 1px solid var(--line); }
+  .sheet .ht .top { display: flex; gap: 8px; align-items: baseline; }
+  .sheet .ht b { flex: 1; }
+  .sheet .ht .lv { font-size: 11px; background: var(--soft); border-radius: 6px; padding: 1px 6px; color: var(--muted); white-space: nowrap; }
+  .sheet .ht .sub { color: var(--muted); font-size: 13px; }
+  .sheet .ht a { font-size: 13px; color: var(--accent); text-decoration: none; }
+  .sheet .empty { text-align: center; color: var(--muted); padding: 28px 0 18px; }
 
   @media (max-width: 860px) {
     .app { grid-template-columns: 1fr; grid-template-rows: 46vh 1fr; height: 100dvh; }
@@ -234,6 +254,7 @@
       <div id="hcap"></div>
       <button type="button" id="capCancel">取消</button>
     </div></div>
+    <div class="sheet" id="hsheet" hidden><div class="box" id="hbox"></div></div>
     <div class="tour" id="tour">
       <button id="prev" title="上一站">◀</button>
       <button id="play" class="play">▶ 讲解</button>
@@ -245,11 +266,11 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://js.hcaptcha.com/1/api.js?render=explicit&hl=zh-CN" async defer></script>
-<script src="data.js?v=202610180051"></script>
-<script src="geo.js?v=202610180051"></script>
+<script src="data.js?v=202610182211"></script>
+<script src="geo.js?v=202610182211"></script>
 <script>
 // 页面版本（由 bump-version.sh 更新）。微信等浏览器会缓存旧页面，打开时和提交前都检查一次，过期就自动刷新
-const PAGE_VERSION = '202610180051';
+const PAGE_VERSION = '202610182211';
 const latestVersion = () => fetch(`version.json?t=${Date.now()}`, { cache: 'no-store' }).then(r => r.json()).then(d => d.v).catch(() => null);
 function reloadTo(v) {
   try { if (sessionStorage.getItem('reloaded') === v) return false; sessionStorage.setItem('reloaded', v); } catch {}
@@ -466,8 +487,32 @@ function popupHtml(id, r) {
   return `<div class="pp"><h3>${p.name}</h3><div class="en">${p.en}</div>
     <div style="margin-top:6px">${p.intro}</div>
     <div class="meta">${n ? `住 ${n} 晚` : '途经 / 一日游，不住宿'}</div>
-    <ul>${top}</ul></div>`;
+    <ul>${top}</ul>
+    ${p.stay[1] > 0 ? `<button type="button" class="hbtn" data-hotels="${id}">🏨 住宿推荐${(p.hotels || []).length ? ` (${p.hotels.length})` : ''}</button>` : ''}</div>`;
 }
+
+/* ---------- 住宿推荐面板（数据见 data.js 里各地点的 hotels） ---------- */
+const HOTEL_LV = ['经济', '常规', '高端'];
+function openHotels(id, lv) {
+  const p = PLACES[id], hs = p.hotels || [];
+  const list = hs.filter(h => !lv || h.lv === lv);
+  $('#hbox').innerHTML = `<div class="hd"><h3>🏨 ${p.name} · 住宿推荐</h3><button type="button" class="x" id="hclose" title="关闭">✕</button></div>
+    ${hs.length ? `<div class="lvs">${['', ...HOTEL_LV].map(l => `<button type="button" data-lv="${l}" class="${(lv || '') === l ? 'on' : ''}">${l || '全部'}</button>`).join('')}</div>` : ''}
+    ${list.length ? list.map(h => `<div class="ht"><div class="top"><b>${h.n}</b>${h.lv ? `<span class="lv">${h.lv}</span>` : ''}</div>
+      <div class="sub">${[h.loc, h.p ? `约 ${Array.isArray(h.p) ? mr(h.p) : money(h.p)}/间/晚` : ''].filter(Boolean).join(' · ')}</div>
+      ${h.why ? `<div class="sub">✓ 适合：${h.why}</div>` : ''}
+      ${h.u ? `<a href="${h.u}" target="_blank" rel="noopener">官网 ↗</a>` : ''}</div>`).join('')
+      + '<p class="fine" style="margin:10px 0 0">* 价格为旺季参考价，以实际预订为准</p>'
+      : `<div class="empty">${hs.length ? '该档次暂无推荐' : '住宿推荐整理中，敬请期待'}</div>`}`;
+  $('#hsheet').hidden = false;
+  $('#hclose').onclick = closeHotels;
+  $('#hbox').querySelectorAll('[data-lv]').forEach(b => b.onclick = () => openHotels(id, b.dataset.lv));
+}
+function closeHotels() { $('#hsheet').hidden = true; }
+$('#hsheet').onclick = e => { if (e.target.id === 'hsheet') closeHotels(); };
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeHotels(); });
+// Leaflet 弹窗会拦截点击冒泡，所以在弹窗打开时绑定按钮
+map.on('popupopen', e => e.popup.getElement().querySelectorAll('[data-hotels]').forEach(b => b.onclick = () => openHotels(b.dataset.hotels)));
 
 function drawActive() {
   activeLayer.clearLayers();
