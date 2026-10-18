@@ -74,6 +74,7 @@
   .nstep button { border: 0; background: color-mix(in srgb, var(--c) 22%, white); color: var(--c); width: 20px; height: 20px; border-radius: 6px; font-weight: 700; cursor: pointer; padding: 0; line-height: 20px; }
   .nstep button:disabled { opacity: .35; cursor: default; }
   .nrange { display: block; font-size: 10.5px; color: var(--muted); margin-top: 2px; }
+  .datesec h2 small { font-weight: 400; font-size: 12px; color: var(--muted); margin-left: 4px; }
   .dates { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
   .dates label { display: grid; gap: 3px; font-size: 12px; color: var(--muted); }
   .dates input { font: inherit; color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; width: 100%; }
@@ -267,11 +268,11 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://js.hcaptcha.com/1/api.js?render=explicit&hl=zh-CN" async defer></script>
-<script src="data.js?v=202610182215"></script>
-<script src="geo.js?v=202610182215"></script>
+<script src="data.js?v=202610182230"></script>
+<script src="geo.js?v=202610182230"></script>
 <script>
 // 页面版本（由 bump-version.sh 更新）。微信等浏览器会缓存旧页面，打开时和提交前都检查一次，过期就自动刷新
-const PAGE_VERSION = '202610182215';
+const PAGE_VERSION = '202610182230';
 const latestVersion = () => fetch(`version.json?t=${Date.now()}`, { cache: 'no-store' }).then(r => r.json()).then(d => d.v).catch(() => null);
 function reloadTo(v) {
   try { if (sessionStorage.getItem('reloaded') === v) return false; sessionStorage.setItem('reloaded', v); } catch {}
@@ -339,7 +340,7 @@ const fleetPrice = f => VEHICLES.reduce((s, v) => s + vprice(v) * (f[v.id] || 0)
 const fleetLabel = f => VEHICLES.filter(v => f[v.id]).map(v => `${v.name}${f[v.id] > 1 ? ` × ${f[v.id]} 辆` : ''}`).join(' + ');
 const fleet = () => state.vehicle === 'auto' ? cheapestFleet() : { [state.vehicle]: cars(VEHICLES.find(v => v.id === state.vehicle)) };
 const nightKey = (r, id) => r.id + ':' + id;
-const state = { cart: { N: null, S: null }, preCar: {}, dates: {}, skip: {}, airport: {}, addons: {}, custom: { island: 'S', stops: [] }, nightSel: {}, month: new Date().getMonth() + 1, start: 'chc', route: 'central', people: 2, vehicle: 'auto', days: null, picks: {}, tourIdx: -1, playing: null };
+const state = { cart: { N: null, S: null }, preCar: {}, dates: {}, skip: {}, airport: {}, addons: {}, custom: { island: 'S', stops: { S: [], N: [] } }, nightSel: {}, month: new Date().getMonth() + 1, start: 'chc', route: 'central', people: 2, vehicle: 'auto', days: null, picks: {}, tourIdx: -1, playing: null };
 
 // 按出发城市调整线路方向：单程线路反向，环线换起点；单独行程固定出发城市
 function orient(r) {
@@ -381,14 +382,15 @@ ROUTES.concat(ADDONS).forEach(r => r.legs.forEach((m, i) => { LEG_TIME[[r.stops[
 const legTime = (a, b) => LEG_TIME[[a, b].sort().join('-')] ?? Math.max(5, Math.round((geo(a, b) || { osrmMin: 0 }).osrmMin / 5) * 5);
 
 // 自由组合：客人按行程顺序点选地点
-function customRoute() {
-  const st = state.custom.stops.filter((id, i, a) => i === 0 || id !== a[i - 1]);
+// 自由组合：南岛、北岛各一条，分别保存地点和日期（id = custom-S / custom-N）
+function customRoute(k) {
+  const st = state.custom.stops[k].filter((id, i, a) => i === 0 || id !== a[i - 1]);
   const nights = st.map((id, i) => {
     if (st.indexOf(id) < i || PLACES[id].stay[1] === 0 || CUSTOM_PASS.includes(id)) return 0;
     const [lo, hi] = NIGHT_RANGE[id] || [0, 2];
     return Math.min(hi, Math.max(lo, 1));
   });
-  return { id: 'custom', type: 'custom', stars: true, name: '自由组合', sub: '按顺序自选地点', color: '#0f766e',
+  return { id: 'custom-' + k, island: k, type: 'custom', name: '自由组合', sub: (k === 'N' ? '北岛' : '南岛') + ' · 按顺序自选地点', color: '#0f766e',
     desc: '按您想走的顺序依次点选地点，系统自动计算每段车程、住宿和报价。',
     stops: st, nights, legs: st.slice(1).map((id, i) => legTime(st[i], id)), legNotes: st.slice(1).map(() => '') };
 }
@@ -406,7 +408,7 @@ function withSkips(r) {
   }
   return { ...r, stops, nights, legs, legNotes };
 }
-const buildOR = () => { OR = [...ROUTES.map(r => withNights(withAddons(withSkips(orient(r))))), withNights(customRoute())]; };
+const buildOR = () => { OR = [...ROUTES.map(r => withNights(withAddons(withSkips(orient(r))))), withNights(customRoute('S')), withNights(customRoute('N'))]; };
 // 自由组合里只途经、不住宿的地点
 const CUSTOM_PASS = ['hob', 'wtm', 'mil'];
 const nightRange = (r, id) => r.fixedNights ? null : r.type === 'custom' && CUSTOM_PASS.includes(id) ? null : NIGHT_RANGE[id] || (r.type === 'custom' && PLACES[id].stay[1] > 0 ? [0, 2] : null);
@@ -592,8 +594,8 @@ function focusStop(i, zoom = 10) {
 
 /* ---------- 侧边栏 ---------- */
 function renderTabs() {
-  const inCart = id => Object.values(state.cart).includes(id);
-  const tab = t => `<button class="tab ${state.route === t.id ? 'on' : ''} ${inCart(t.id) ? 'incart' : ''}" style="--c:${t.color}" data-id="${t.id}"><b>${inCart(t.id) ? '✓ ' : ''}${t.tab || t.name}</b><small>${t.sub.split(' · ')[0]}</small></button>`;
+  const inCart = id => Object.values(state.cart).some(v => v && (v === id || (id === 'custom' && v.startsWith('custom-'))));
+  const tab = t => `<button class="tab ${state.route === t.id || (t.id === 'custom' && state.route.startsWith('custom-')) ? 'on' : ''} ${inCart(t.id) ? 'incart' : ''}" style="--c:${t.color}" data-id="${t.id}"><b>${inCart(t.id) ? '✓ ' : ''}${t.tab || t.name}</b><small>${t.sub.split(' · ')[0]}</small></button>`;
   const r = active();
   // 全览不显示出发城市，只保留人数选择
   const startHtml = state.route === 'all' ? ''
@@ -607,7 +609,7 @@ function renderTabs() {
     <div class="glabel">南岛经典线路（可加选米尔福德 / 凯库拉 / 阿卡罗阿）</div>${ROUTES.filter(r => r.type === 'main').map(tab).join('')}
     <div class="start">${startHtml}<span class="pplwrap">人数 <select class="pplsel" data-pplsel>${Array.from({ length: MAX_PEOPLE }, (_, i) => i + 1).map(n => `<option value="${n}" ${state.people === n ? 'selected' : ''}>${n} 人</option>`).join('')}</select></span></div>
 `;
-  $('#tabs').querySelectorAll('.tab').forEach(b => b.onclick = () => setRoute(b.dataset.id));
+  $('#tabs').querySelectorAll('.tab').forEach(b => b.onclick = () => setRoute(b.dataset.id === 'custom' ? 'custom-' + state.custom.island : b.dataset.id));
   $('#tabs').querySelectorAll('[data-pplsel]').forEach(sel => sel.onchange = () => setPeople(+sel.value));
   $('#tabs').querySelectorAll('[data-start]').forEach(b => b.onclick = () => {
     if (state.start === b.dataset.start) return;
@@ -830,15 +832,16 @@ function preTrip(r, td, fl) {
     carDays: td.carDays, carOn, car: carOn ? rmul(fleetRange(fl), td.carDays) : 0, perDay: fleetPrice(fl) };
 }
 function datesHtml(r, td, pre) {
-  const city = PLACES[r.stops[0]].name, end = PLACES[r.stops[r.stops.length - 1]].name;
-  return `<section><h2>📅 行程日期</h2>
+  const isl = islandOf(r) === 'N' ? '北岛' : '南岛', empty = r.stops.length < 2;
+  const city = empty ? '' : PLACES[r.stops[0]].name, end = empty ? '' : PLACES[r.stops[r.stops.length - 1]].name;
+  return `<section class="datesec"><h2>📅 ${isl}行程日期${empty ? '<small>（尚未选择' + isl + '地点）</small>' : ''}</h2>
     <div class="dates">
       <label>抵达${city}日期<input type="date" data-date="arrive" data-rid="${r.id}" value="${dts(r).arrive}"></label>
       <label>包车出发日期<input type="date" data-date="start" data-rid="${r.id}" value="${dts(r).start}"></label>
       <label>离开${end}日期<input type="date" value="${td ? isoD(td.leave) : ''}" disabled></label>
     </div>
     <p class="fine" style="margin:6px 0 0">${td
-      ? `抵达 ${fmtD(td.arrive)} · 包车出发 ${fmtD(td.start)} · 离开 ${fmtD(td.leave)}${pre ? `；抵达当天只接机，包车出发前在${pre.name}住 ${pre.nights} 晚，住宿已按人数计入报价` : ''}。离开日期按包车出发日期加住宿晚数自动计算。`
+      ? empty ? `抵达 ${fmtD(td.arrive)} · 包车出发 ${fmtD(td.start)}，选好${isl}地点后自动计算离开日期。` : `抵达 ${fmtD(td.arrive)} · 包车出发 ${fmtD(td.start)} · 离开 ${fmtD(td.leave)}${pre ? `；抵达当天只接机，包车出发前在${pre.name}住 ${pre.nights} 晚，住宿已按人数计入报价` : ''}。离开日期按包车出发日期加住宿晚数自动计算。`
       : `填写抵达日期后，系统会按住宿晚数自动排出每站日期和离开日期，并按出发月份计算淡旺季价格。`}</p>
     ${pre && pre.carDays ? `<div class="addons" style="margin-top:8px"><label class="addon ${pre.carOn ? 'on' : ''}" style="--c:${r.color}"><input type="checkbox" data-precar="${r.id}" ${pre.carOn ? 'checked' : ''}>
       <span><b>包车出发前在${pre.name}用车 ${pre.carDays} 天</b>（${fmtD(addD(td.arrive, 1))}${pre.carDays > 1 ? ` – ${fmtD(addD(td.arrive, pre.carDays))}` : ''}）<small>勾选后计入总报价</small></span></label></div>` : ''}
@@ -874,32 +877,34 @@ function addonHtml(r) {
 }
 
 function builderHtml(r) {
-  const isl = state.custom.island;
+  const isl = r.island, cs = state.custom.stops[isl];
   // 只列可住宿的地点，且不含但尼丁以南（卡特林斯、因弗卡吉尔）；普纳凯基、霍基蒂卡、弗朗茨约瑟夫冰川也不列
   const CUSTOM_HIDE = ['pun', 'hok', 'fra'];
   const ids = Object.keys(PLACES).filter(id => (PLACES[id].island || 'S') === isl && (PLACES[id].stay[1] > 0 || CUSTOM_PASS.includes(id)) && PLACES[id].lat >= PLACES.dun.lat && !CUSTOM_HIDE.includes(id));
   return `<section class="builder" style="--c:${r.color}">
     <h2>🧭 自由组合：按行程顺序点选地点</h2>
     <div class="row">岛屿 <span class="seg">${[['S', '南岛'], ['N', '北岛']].map(([k, n]) => `<button class="${isl === k ? 'on' : ''}" data-cisl="${k}">${n}</button>`).join('')}</span>
-      ${state.custom.stops.length ? `<button class="tab" style="flex:0;padding:4px 12px" data-cclear>清空</button>` : ''}</div>
+      ${cs.length ? `<button class="tab" style="flex:0;padding:4px 12px" data-cclear>清空${isl === 'N' ? '北岛' : '南岛'}</button>` : ''}</div>
     <div class="chips">${ids.map(id => `<button data-cadd="${id}">＋ ${PLACES[id].name}${CUSTOM_PASS.includes(id) ? `（途经 · ${PLACES[id].acts[0].n.split(' ')[0]}）` : ''}</button>`).join('')}</div>
-    ${state.custom.stops.length ? `<ol>${state.custom.stops.map((id, i) => `<li><span>${i + 1}</span><b>${PLACES[id].name}</b>
-      <button data-cmove="${i}" data-cd="-1" title="上移" ${i === 0 ? 'disabled' : ''}>↑</button><button data-cmove="${i}" data-cd="1" title="下移" ${i === state.custom.stops.length - 1 ? 'disabled' : ''}>↓</button><button data-crm="${i}" title="移除">✕</button></li>`).join('')}</ol>`
+    ${cs.length ? `<ol>${cs.map((id, i) => `<li><span>${i + 1}</span><b>${PLACES[id].name}</b>
+      <button data-cmove="${i}" data-cd="-1" title="上移" ${i === 0 ? 'disabled' : ''}>↑</button><button data-cmove="${i}" data-cd="1" title="下移" ${i === cs.length - 1 ? 'disabled' : ''}>↓</button><button data-crm="${i}" title="移除">✕</button></li>`).join('')}</ol>`
       : `<p class="fine">从上面依次点选，第一个就是出发地，可重复选择（例如最后回到出发城市）。</p>`}
   </section>`;
 }
 
 function bindBuilder() {
   const redo = () => { state.days = null; buildLayers(); const y = $('aside').scrollTop; render(); drawActive(); $('aside').scrollTop = y; };
-  const c = state.custom;
-  document.querySelectorAll('[data-cisl]').forEach(b => b.onclick = () => { if (c.island !== b.dataset.cisl) { c.island = b.dataset.cisl; c.stops = []; redo(); } });
-  document.querySelectorAll('[data-cclear]').forEach(b => b.onclick = () => { c.stops = []; redo(); });
+  const isl = state.route.startsWith('custom-') ? state.route.slice(7) : state.custom.island;
+  const c = { stops: state.custom.stops[isl] };
+  // 切换岛屿不清空另一岛已选的地点
+  document.querySelectorAll('[data-cisl]').forEach(b => b.onclick = () => { if (isl !== b.dataset.cisl) { state.custom.island = b.dataset.cisl; setRoute('custom-' + b.dataset.cisl); } });
+  document.querySelectorAll('[data-cclear]').forEach(b => b.onclick = () => { c.stops.length = 0; redo(); });
   document.querySelectorAll('[data-cadd]').forEach(b => b.onclick = () => {
     const id = b.dataset.cadd;
     if (c.stops[c.stops.length - 1] === id) return;
     c.stops.push(id);
     // 途经点（霍比特村、萤火虫洞）默认勾选主要活动，价格直接计入报价，客人可取消
-    if (CUSTOM_PASS.includes(id)) { const pk = state.picks.custom = state.picks.custom || {}; if (pk[id + ':0'] == null) pk[id + ':0'] = true; }
+    if (CUSTOM_PASS.includes(id)) { const pk = state.picks['custom-' + isl] = state.picks['custom-' + isl] || {}; if (pk[id + ':0'] == null) pk[id + ':0'] = true; }
     redo();
   });
   document.querySelectorAll('[data-crm]').forEach(b => b.onclick = () => { c.stops.splice(+b.dataset.crm, 1); redo(); });
@@ -983,9 +988,16 @@ function quoteFor(r) {
   });
 }
 
+// 行程日期放在路线最上面；自由组合同时显示北岛、南岛两段日期
+function datesFor(r) {
+  if (r.type !== 'custom') return datesHtml(r, tripDates(r), withMonth(r, () => preTrip(r, tripDates(r), fleet())));
+  return ['N', 'S'].map(k => { const x = OR.find(o => o.id === 'custom-' + k), td = tripDates(x);
+    return datesHtml(x, td, x.stops.length > 1 ? withMonth(x, () => preTrip(x, td, fleet())) : null); }).join('');
+}
+
 function renderRoute(r) {
   if (r.type === 'custom' && r.stops.length < 2) {
-    $('#content').innerHTML = `<section><h2 style="color:${r.color}">${r.name} · ${r.sub}</h2><p class="desc">${r.desc}</p></section>${builderHtml(r)}`;
+    $('#content').innerHTML = `${datesFor(r)}<section><h2 style="color:${r.color}">${r.name} · ${r.sub}</h2><p class="desc">${r.desc}</p></section>${builderHtml(r)}`;
     bindBuilder();
     return;
   }
@@ -1022,6 +1034,7 @@ function renderRoute(r) {
   });
 
   $('#content').innerHTML = `
+    ${datesFor(r)}
     <section>
       <h2 style="color:${r.color}">${r.name} · ${r.sub}</h2>
       <p style="margin:-4px 0 8px;font-weight:600">${fromTo(r)}</p>
@@ -1035,7 +1048,6 @@ function renderRoute(r) {
     </section>
     ${r.type === 'custom' ? builderHtml(r) : addonHtml(r)}${optionalHtml(r)}
     <section><h2>📍 途经地与每段车程</h2><p class="fine" style="margin:-4px 0 10px">勾选活动可加入下方报价 · 点击站点或车程在地图上定位</p><div class="timeline">${tl}</div></section>
-    ${datesHtml(r, td, pre)}
     ${airportHtml(r, air, days)}
     ${vehicleHtml(days, pre && pre.carOn ? pre.carDays : 0)}
     <section style="border-bottom:0">
@@ -1071,7 +1083,7 @@ function renderRoute(r) {
 }
 
 /* ---------- 已选行程：北岛、南岛各选一条，合并报价 ---------- */
-const islandOf = r => PLACES[r.stops[0]] && PLACES[r.stops[0]].island === 'N' ? 'N' : 'S';
+const islandOf = r => r.island || (PLACES[r.stops[0]] && PLACES[r.stops[0]].island === 'N' ? 'N' : 'S');
 const ISL = { N: '北岛', S: '南岛' };
 const segName = r => `${r.name.replace(/^北岛 · /, '')}${r.type === 'custom' ? '' : ' · ' + r.sub.split(' · ')[0]}`;
 const cartRoutes = () => ['N', 'S'].map(k => state.cart[k] && OR.find(r => r.id === state.cart[k])).filter(r => r && r.stops.length > 1);
@@ -1102,11 +1114,11 @@ function cartData() {
 const resetBtns = `<div class="resets"><button data-reset="N">↺ 重置北岛</button><button data-reset="S">↺ 重置南岛</button></div>`;
 // 重置某个岛：清掉已选行程，以及该岛所有线路上调整过的晚数、活动、加选、途经点、接送机、日期
 function resetIsland(k) {
-  const ids = OR.filter(r => r.type === 'custom' ? state.custom.island === k : islandOf(r) === k).map(r => r.id);
+  const ids = OR.filter(r => islandOf(r) === k).map(r => r.id);
   state.cart[k] = null;
   ids.forEach(id => { ['picks', 'addons', 'skip', 'airport', 'dates', 'preCar'].forEach(f => delete state[f][id]); });
   Object.keys(state.nightSel).forEach(key => { if (ids.includes(key.split(':')[0])) delete state.nightSel[key]; });
-  if (state.custom.island === k) state.custom.stops = [];
+  state.custom.stops[k] = [];
   state.days = null;
   buildLayers();
 }
