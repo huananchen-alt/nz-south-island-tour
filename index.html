@@ -113,6 +113,9 @@
   .chk.warn { background: #fff4e0; color: #9a5800; border: 2px solid #f0a020; }
   .chk.err { background: #fde8e8; color: #b42318; border: 2px solid #e5484d; }
   .chk.info { background: var(--soft); color: var(--muted); font-weight: 500; }
+  .hubpick { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; margin-top: 4px; font-size: 12px; color: var(--muted); }
+  .hubpick button { border: 1px solid var(--line); background: var(--panel); border-radius: 99px; padding: 2px 10px; font: inherit; font-size: 12px; cursor: pointer; color: var(--ink); }
+  .hubpick button.on { background: var(--c); border-color: var(--c); color: #fff; }
   .addons { display: grid; gap: 8px; }
   .addon { display: flex; gap: 10px; align-items: flex-start; border: 1px solid var(--line); border-radius: 10px; padding: 9px 11px; cursor: pointer; }
   .addon.on { border-color: var(--c); background: color-mix(in srgb, var(--c) 8%, white); }
@@ -313,11 +316,11 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://js.hcaptcha.com/1/api.js?render=explicit&hl=zh-CN" async defer></script>
-<script src="data.js?v=202610191206"></script>
-<script src="geo.js?v=202610191206"></script>
+<script src="data.js?v=202610191416"></script>
+<script src="geo.js?v=202610191416"></script>
 <script>
 // 页面版本（由 bump-version.sh 更新）。微信等浏览器会缓存旧页面，打开时和提交前都检查一次，过期就自动刷新
-const PAGE_VERSION = '202610191206';
+const PAGE_VERSION = '202610191416';
 const latestVersion = () => fetch(`version.json?t=${Date.now()}`, { cache: 'no-store' }).then(r => r.json()).then(d => d.v).catch(() => null);
 function reloadTo(v) {
   try { if (sessionStorage.getItem('reloaded') === v) return false; sessionStorage.setItem('reloaded', v); } catch {}
@@ -385,7 +388,7 @@ const fleetPrice = f => VEHICLES.reduce((s, v) => s + vprice(v) * (f[v.id] || 0)
 const fleetLabel = f => VEHICLES.filter(v => f[v.id]).map(v => `${v.name}${f[v.id] > 1 ? ` × ${f[v.id]} 辆` : ''}`).join(' + ');
 const fleet = () => state.vehicle === 'auto' ? cheapestFleet() : { [state.vehicle]: cars(VEHICLES.find(v => v.id === state.vehicle)) };
 const nightKey = (r, id) => r.id + ':' + id;
-const state = { cart: { N: null, S: null }, preCar: {}, dates: {}, skip: {}, airport: {}, addons: {}, custom: { island: 'S', stops: { S: [], N: [] } }, nightSel: {}, month: new Date().getMonth() + 1, start: 'chc', route: 'central', people: 2, vehicle: 'auto', days: null, picks: {}, tourIdx: -1, playing: null };
+const state = { addonHub: {}, cart: { N: null, S: null }, preCar: {}, dates: {}, skip: {}, airport: {}, addons: {}, custom: { island: 'S', stops: { S: [], N: [] } }, nightSel: {}, month: new Date().getMonth() + 1, start: 'chc', route: 'central', people: 2, vehicle: 'auto', days: null, picks: {}, tourIdx: -1, playing: null };
 
 // 按出发城市调整线路方向：单程线路反向，环线换起点；单独行程固定出发城市
 function orient(r) {
@@ -405,13 +408,22 @@ function orient(r) {
   return r;
 }
 // 加选行程（米尔福德 / 凯库拉 / 阿卡罗阿）：插到线路第一次经过枢纽城市的位置
+// 把加选行程落到具体线路上：多出发点的加选（如蒂阿瑙）按 hubs 顺序选线路里第一个有的城市
+function resolveAddon(a, stops, pick) {
+  if (!a.hubs) return stops.includes(a.hub) ? a : null;
+  const hub = (pick && stops.includes(pick) && a.hubs.includes(pick)) ? pick : a.hubs.find(h => stops.includes(h));
+  if (!hub) return null;
+  return { ...a, hub, stops: [hub, a.via, hub], nights: [0, 1, 0], legs: [legTime(hub, a.via), legTime(a.via, hub)], legNotes: ['', '原路返回' + PLACES[hub].name] };
+}
+
 function withAddons(r) {
   if (r.type !== 'main') return r;
   const on = state.addons[r.id] || {};
   let x = { ...r, stops: [...r.stops], nights: [...r.nights], legs: [...r.legs], legNotes: [...r.legNotes], addonNames: [] };
-  ADDONS.filter(a => on[a.id]).forEach(a => {
+  ADDONS.filter(a => on[a.id]).forEach(a0 => {
+    const a = resolveAddon(a0, x.stops, (state.addonHub[r.id] || {})[a0.id]);
+    if (!a) return;
     const k = x.stops.indexOf(a.hub);
-    if (k < 0) return;
     x.stops.splice(k + 1, 0, ...a.stops.slice(1));
     x.nights.splice(k + 1, 0, ...a.nights.slice(1));
     x.legs.splice(k, 0, ...a.legs);
@@ -423,7 +435,7 @@ function withAddons(r) {
 
 // 两地之间的车程：优先用经典线路里整理过的时间，其余按道路数据取整到 5 分钟
 const LEG_TIME = {};
-ROUTES.concat(ADDONS).forEach(r => r.legs.forEach((m, i) => { LEG_TIME[[r.stops[i], r.stops[i + 1]].sort().join('-')] = m; }));
+ROUTES.concat(ADDONS.filter(a => a.stops)).forEach(r => r.legs.forEach((m, i) => { LEG_TIME[[r.stops[i], r.stops[i + 1]].sort().join('-')] = m; }));
 const legTime = (a, b) => LEG_TIME[[a, b].sort().join('-')] ?? Math.max(5, Math.round((geo(a, b) || { osrmMin: 0 }).osrmMin / 5) * 5);
 
 // 自由组合：客人按行程顺序点选地点
@@ -920,10 +932,12 @@ function optionalHtml(r) {
 function addonHtml(r) {
   if (r.type !== 'main') return '';
   const on = state.addons[r.id] || {};
-  return `<section><h2>➕ 加选行程（可与本线路自由组合）</h2><div class="addons">${ADDONS.map(a => `
+  const list = ADDONS.map(a => resolveAddon(a, r.stops, (state.addonHub[r.id] || {})[a.id])).filter(Boolean);
+  return `<section><h2>➕ 加选行程（可与本线路自由组合）</h2><div class="addons">${list.map(a => `
     <label class="addon ${on[a.id] ? 'on' : ''}" style="--c:${r.color}"><input type="checkbox" data-addon="${a.id}" ${on[a.id] ? 'checked' : ''}>
-      <span><b>${a.name}</b> · ${a.sub}<small>${a.stops.map(id => PLACES[id].name).join(' → ')} · 车程约 ${hm(a.legs.reduce((x, y) => x + y, 0))}</small></span></label>`).join('')}
-  </div><p class="fine" style="margin:8px 0 0">勾选后会插入到线路经过${ADDONS.map(a => PLACES[a.hub].name).filter((x, i, l) => l.indexOf(x) === i).join(' / ')}的位置，住宿晚数可在下方调整。</p></section>`;
+      <span><b>${a.name}</b> · ${a.sub}<small>${a.stops.map(id => PLACES[id].name).join(' → ')} · 车程约 ${hm(a.legs.reduce((x, y) => x + y, 0))}</small>
+      ${a.hubs && on[a.id] ? `<span class="hubpick">出发：${a.hubs.filter(h => r.stops.includes(h)).map(h => `<button type="button" class="${h === a.hub ? 'on' : ''}" data-hub="${a.id}:${h}">${PLACES[h].name}</button>`).join('')}</span>` : ''}</span></label>`).join('')}
+  </div><p class="fine" style="margin:8px 0 0">勾选后会插入到线路经过${list.map(a => PLACES[a.hub].name).filter((x, i, l) => l.indexOf(x) === i).join(' / ')}的位置，住宿晚数可在下方调整。</p></section>`;
 }
 
 function builderHtml(r) {
@@ -978,6 +992,11 @@ function bindBuilder() {
   document.querySelectorAll('[data-optstop]').forEach(cb => cb.onchange = () => {
     const sk = state.skip[state.route] = state.skip[state.route] || {};
     sk[cb.dataset.optstop] = !cb.checked; redo();
+  });
+  document.querySelectorAll('[data-hub]').forEach(b => b.onclick = e => {
+    e.preventDefault(); e.stopPropagation();
+    const [aid, hub] = b.dataset.hub.split(':');
+    (state.addonHub[state.route] = state.addonHub[state.route] || {})[aid] = hub; redo();
   });
   document.querySelectorAll('[data-addon]').forEach(cb => cb.onchange = () => {
     const on = state.addons[state.route] = state.addons[state.route] || {};
@@ -1168,7 +1187,7 @@ const resetBtns = `<div class="resets"><button data-reset="N">↺ 重置北岛</
 function resetIsland(k) {
   const ids = OR.filter(r => islandOf(r) === k).map(r => r.id);
   state.cart[k] = null;
-  ids.forEach(id => { ['picks', 'addons', 'skip', 'airport', 'dates', 'preCar'].forEach(f => delete state[f][id]); });
+  ids.forEach(id => { ['picks', 'addons', 'addonHub', 'skip', 'airport', 'dates', 'preCar'].forEach(f => delete state[f][id]); });
   Object.keys(state.nightSel).forEach(key => { if (ids.includes(key.split(':')[0])) delete state.nightSel[key]; });
   state.custom.stops[k] = [];
   state.days = null;
