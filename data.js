@@ -1,7 +1,8 @@
 // 新西兰南岛线路数据（价格单位：新西兰元 NZD，2026 旺季参考价，以实际预订为准）
 // stay = 每人每晚住宿价格区间 [常规, 高端]（按两人一间均摊；常规 = 3–4 星酒店/汽车旅馆，高端 = 当地高端酒店/精品度假屋）
 // hotels = 住宿推荐（地图弹窗里「🏨 住宿推荐」按钮显示；不写或为空则显示「整理中」，不参与报价）：
-//   { n: 名称, lv: '经济' | '常规' | '高端' | '民宿'（民宿 = 整栋 holiday house）, p: 每间每晚参考价（或 [低, 高]）, loc: 位置特点, why: 适合谁, u: 官网 }
+//   { n: 名称, lv: '经济' | '常规' | '高端' | '民宿'（民宿 = 整栋 holiday house）, p: 每间每晚参考价（或 [低, 高]）, loc: 位置特点, why: 适合谁, u: 官网,
+//     img: [图片地址, 或 { src: 图片地址, cap: '窗外景色' }]（缩略图可点开放大，左右滑动切换） }
 // 活动 p = 每人价格（0 = 免费；[低, 高] = 按档位的价格区间），d = 游玩时长，u = 官方网站，age = 年龄/身高/体重限制，hot = 强烈推荐
 
 const PLACES = {
@@ -16,14 +17,70 @@ const PLACES = {
   tek: { name: '蒂卡波湖', en: 'Lake Tekapo', lat: -44.0047, lng: 170.4772, stay: [100, 350],
     intro: '牛奶蓝湖水 + 好牧羊人教堂 + 世界级暗夜星空保护区，11–12 月鲁冰花盛开。',
     hotels: [
-      { n: 'Grand Suites Lake Tekapo', lv: '高端', loc: '套房酒店，Booking 评分 9.4', why: '追求舒适、带家人的客人', u: 'https://www.booking.com/hotel/nz/grand-suites-lake-tekapo.zh-cn.html' },
-      { n: 'The Godley Hotel', lv: '常规', loc: '主街上，步行到湖边和餐厅', why: '性价比、行程紧凑', u: 'https://www.booking.com/hotel/nz/the-godley.zh-cn.html' },
-      { n: 'Lakes Edge Holiday Park', lv: '经济', loc: '湖岸边的假日公园，汽车旅馆房和小屋', why: '预算有限、想住湖边', u: 'https://www.booking.com/hotel/nz/lake-tekapo-motels-amp-holiday-park-lake-tekapo.zh-cn.html' },
-      { n: 'Roto Cottage', lv: '民宿', loc: '整栋独立出租，Booking 评分 9.8', why: '情侣、小家庭', u: 'https://www.booking.com/hotel/nz/roto-cottage-lake-tekapo-lake-tekapo.zh-cn.html' },
-      { n: 'The Landsborough Tekapo', lv: '民宿', loc: '整栋独立出租，Booking 评分 9.7', why: '注重品质的家庭', u: 'https://www.booking.com/hotel/nz/17-rodman.zh-cn.html' },
-      { n: 'Tekapo Alps', lv: '民宿', loc: '整栋独立出租，Booking 评分 9.5', why: '家庭、朋友结伴', u: 'https://www.booking.com/hotel/nz/tekapo-alps.zh-cn.html' },
-      { n: 'Alpine Vista', lv: '民宿', loc: '整栋独立出租，Booking 评分 9.5', why: '家庭、朋友结伴', u: 'https://www.booking.com/hotel/nz/alpine-vista.zh-cn.html' },
-      { n: 'Ohana Tekapo Vista', lv: '民宿', loc: '整栋 3 卧室，带热水浴缸和景观', why: '多人包车团、看星空', u: 'https://www.booking.com/hotel/nz/ohana-tekapo-vista-3br-hot-tub-stunning-views.zh-cn.html' },
+      { n: 'Grand Suites Lake Tekapo', lv: '高端', loc: '套房酒店，Booking 评分 9.4', why: '追求舒适、带家人的客人', u: 'https://www.booking.com/hotel/nz/grand-suites-lake-tekapo.zh-cn.html',
+      img: [
+        { src: 'https://cf.bstatic.com/xdata/images/hotel/max1024x768/385333277.jpg?k=2a28fb2f2e1aead511f68fdc94b81fb9ceb0d5811680de18594b7446859c569c&o=&hp=1', cap: '窗外景色' },
+        { src: 'https://cf.bstatic.com/xdata/images/hotel/max1024x768/690252527.jpg?k=f4bf572448a6163bf77c7702292b830ca95db47aafb169a12b0cee1593440fde&o=&hp=1', cap: '套房卧室' },
+        { src: 'https://cf.bstatic.com/xdata/images/hotel/max1024x768/385041451.jpg?k=0b564db81bd833aa38c6720669a6fd02a8f838c47329bc7813fc50bcc34e5b1f&o=&hp=1', cap: '客厅' },
+        { src: 'https://cf.bstatic.com/xdata/images/hotel/max1024x768/385041370.jpg?k=2c079a775b5b95b5121401f326592b6c74da4ff9f7b40dc0758d472fd80c1b42&o=&hp=1', cap: '湖景' },
+        { src: 'https://cf.bstatic.com/xdata/images/hotel/max1024x768/385041795.jpg?k=b8adb5e7e4413bf453ddee3e93981cea75810a8a60c01b6f5e186e7990f73498&o=&hp=1', cap: '外观' },
+      ] },
+      { n: 'The Godley Hotel', lv: '常规', loc: '主街上，步行到湖边和餐厅', why: '性价比、行程紧凑', u: 'https://www.booking.com/hotel/nz/the-godley.zh-cn.html',
+      img: [
+        { src: 'https://cf.bstatic.com/xdata/images/hotel/max1024x768/617040141.jpg?k=248c49c6dfde2305c410c76a645613d292bffbbbc4b08e6df6e5a7719f842041&o=&hp=1', cap: '窗外景色（湖景房）' },
+        { src: 'https://cf.bstatic.com/xdata/images/hotel/max1024x768/324963422.jpg?k=3b54db490e9b8410ae171b86fa621a2082f0de623f40ba5407b85ef2abb4e848&o=&hp=1', cap: '客房' },
+        { src: 'https://cf.bstatic.com/xdata/images/hotel/max1024x768/280026717.jpg?k=9e620eb60149c8fa0cb75f0c66b0e5b89b90f72fab99936493cacd5bb3e9f793&o=&hp=1', cap: '餐厅' },
+        { src: 'https://cf.bstatic.com/xdata/images/hotel/max1024x768/280028680.jpg?k=230812bce7351679a535b60be1d915513c5cf3f075894efd5ad1fa265a7ef0ce&o=&hp=1', cap: '湖景' },
+        { src: 'https://cf.bstatic.com/xdata/images/hotel/max1024x768/280029281.jpg?k=ad629de3de8e415a2a358d43e6f93590006ca22521d662dee2f5e8018864612a&o=&hp=1', cap: '外观' },
+      ] },
+      { n: 'Lakes Edge Holiday Park', lv: '经济', loc: '湖岸边的假日公园，汽车旅馆房和小屋', why: '预算有限、想住湖边', u: 'https://www.booking.com/hotel/nz/lake-tekapo-motels-amp-holiday-park-lake-tekapo.zh-cn.html',
+      img: [
+        { src: 'https://cf.bstatic.com/xdata/images/hotel/max1024x768/903912064.jpg?k=0ebbbdbb1c18489ba1b8845255ddfa25144e1cc90aa73f36707359a2aa023183&o=&hp=1', cap: '窗外景色' },
+        { src: 'https://cf.bstatic.com/xdata/images/hotel/max1024x768/902873735.jpg?k=6c0e9515639ee0396f69f499e045e05e3b3411b831364813b18c5b906b4adf7f&o=&hp=1', cap: '客房' },
+        { src: 'https://cf.bstatic.com/xdata/images/hotel/max1024x768/392501875.jpg?k=938599c839c616218668e1662b8b5207cb821226c4e0a1107ea2aa7acee7e790&o=&hp=1', cap: '起居区' },
+        { src: 'https://cf.bstatic.com/xdata/images/hotel/max1024x768/902873730.jpg?k=3919c530f714b1ccf7c013aff45c91e3199a0b52ec15c1e9dd84400a68c2b542&o=&hp=1', cap: '湖边小屋' },
+        { src: 'https://cf.bstatic.com/xdata/images/hotel/max1024x768/319773826.jpg?k=f3f29c4e4c7d852ae8195970241e3e311a9fbec93219c75946c73c4497322ce5&o=&hp=1', cap: '湖景' },
+      ] },
+      { n: 'Roto Cottage', lv: '民宿', loc: '整栋独立出租，Booking 评分 9.8', why: '情侣、小家庭', u: 'https://www.booking.com/hotel/nz/roto-cottage-lake-tekapo-lake-tekapo.zh-cn.html',
+      img: [
+        { src: 'https://cf.bstatic.com/xdata/images/hotel/max1024x768/740265449.jpg?k=9e955f4eac58ffe13fb461100a3798d330d9d3421672e04391408447f68049d5&o=&hp=1', cap: '窗外景色' },
+        { src: 'https://cf.bstatic.com/xdata/images/hotel/max1024x768/740264524.jpg?k=81140d758139c118b7ef6bd7f0ae6d4500f18e738016eabfeaaa2b466e118e38&o=&hp=1', cap: '外观' },
+        { src: 'https://cf.bstatic.com/xdata/images/hotel/max1024x768/740264714.jpg?k=843d9afebaaff2fb9601a8b912023f31d4749fcd3d04507141d2aab6dc68d30d&o=&hp=1', cap: '客厅' },
+        { src: 'https://cf.bstatic.com/xdata/images/hotel/max1024x768/740264467.jpg?k=1609782feef6e09452ab4a409f78d350db23c1505b0307b4d2a3d92174552997&o=&hp=1', cap: '卧室' },
+        { src: 'https://cf.bstatic.com/xdata/images/hotel/max1024x768/740265121.jpg?k=7bad013c2b8196871d5493a7944b3db986de2fff6ddf94ad648c0edb086e1dfa&o=&hp=1', cap: '餐厨' },
+      ] },
+      { n: 'The Landsborough Tekapo', lv: '民宿', loc: '整栋独立出租，Booking 评分 9.7', why: '注重品质的家庭', u: 'https://www.booking.com/hotel/nz/17-rodman.zh-cn.html',
+      img: [
+        { src: 'https://cf.bstatic.com/xdata/images/hotel/max1024x768/287848247.jpg?k=1ba32d357464757328a6374ce677535c14fdf86540926f25206563da550e60cf&o=&hp=1', cap: '窗外景色' },
+        { src: 'https://cf.bstatic.com/xdata/images/hotel/max1024x768/287848255.jpg?k=8c672bd5fc88ed0dc07558f1c8e93ad7b3e58406167a2b452374690c2780ab6a&o=&hp=1', cap: '外观' },
+        { src: 'https://cf.bstatic.com/xdata/images/hotel/max1024x768/286851556.jpg?k=1efeeb12da6792e7ebd266719fa14dcad6879e9b46a751ffc021e5e4ad987785&o=&hp=1', cap: '客厅' },
+        { src: 'https://cf.bstatic.com/xdata/images/hotel/max1024x768/286851023.jpg?k=90c41dac9e7d982defb1871c9009ef1898134f18857074494bd0808b22454b15&o=&hp=1', cap: '餐厨' },
+        { src: 'https://cf.bstatic.com/xdata/images/hotel/max1024x768/297118448.jpg?k=626d9ce6ea756c6754bb2941940f9f54833592b0dc58c98d5fba87be1f1f9cbc&o=&hp=1', cap: '卧室' },
+      ] },
+      { n: 'Tekapo Alps', lv: '民宿', loc: '整栋独立出租，Booking 评分 9.5', why: '家庭、朋友结伴', u: 'https://www.booking.com/hotel/nz/tekapo-alps.zh-cn.html',
+      img: [
+        { src: 'https://cf.bstatic.com/xdata/images/hotel/max1024x768/875683654.jpg?k=cf432e836229ea0d9f1159391a6e70e65b6aeee4ae5e6553aea5a9c225e38704&o=&hp=1', cap: '窗外景色（卧室）' },
+        { src: 'https://cf.bstatic.com/xdata/images/hotel/max1024x768/921401487.jpg?k=da450f47aa7e63e3f54e0cd588949fe0120f12191f0dea0dca5dd699460ad366&o=&hp=1', cap: '阳台景观' },
+        { src: 'https://cf.bstatic.com/xdata/images/hotel/max1024x768/875683662.jpg?k=4ea871828b07f1c55245b8c25916b8b7764c1bc6b94a2e312a003a0305080cda&o=&hp=1', cap: '客厅' },
+        { src: 'https://cf.bstatic.com/xdata/images/hotel/max1024x768/875683675.jpg?k=456f868d144bef8521452af2269d2e6b7f678f3cadbd439e0008b870a728738c&o=&hp=1', cap: '厨房' },
+        { src: 'https://cf.bstatic.com/xdata/images/hotel/max1024x768/875683722.jpg?k=5827985fe0af51a22054c988954499b4c8f010611f36aff696173e326d2db47d&o=&hp=1', cap: '外观' },
+      ] },
+      { n: 'Alpine Vista', lv: '民宿', loc: '整栋独立出租，Booking 评分 9.5', why: '家庭、朋友结伴', u: 'https://www.booking.com/hotel/nz/alpine-vista.zh-cn.html',
+      img: [
+        { src: 'https://cf.bstatic.com/xdata/images/hotel/max1024x768/766676786.jpg?k=0ff9a3d3d0f50fce05eb78c7271ed1110a8efaf71253c8b0363741b0db49d8be&o=&hp=1', cap: '窗外景色' },
+        { src: 'https://cf.bstatic.com/xdata/images/hotel/max1024x768/766676780.jpg?k=1a8e1823ea0e6c1ce721e14a713e4c44d9045add91b55b03465f638d0e3b3c61&o=&hp=1', cap: '客厅' },
+        { src: 'https://cf.bstatic.com/xdata/images/hotel/max1024x768/766676775.jpg?k=e7a6a78743a23a11349116736121c096176e280875a18e1406f97bd0539d43a3&o=&hp=1', cap: '卧室' },
+        { src: 'https://cf.bstatic.com/xdata/images/hotel/max1024x768/766676773.jpg?k=8bea0abce383b72bde1cc7f38c4193a7b12be9041b096305e807398ef41010ed&o=&hp=1', cap: '餐厨' },
+        { src: 'https://cf.bstatic.com/xdata/images/hotel/max1024x768/766676792.jpg?k=9ed1b2bc73bd277ee50ca78dbe24bec101d267608bef3db3f8d9c86a6149080b&o=&hp=1', cap: '外观' },
+      ] },
+      { n: 'Ohana Tekapo Vista', lv: '民宿', loc: '整栋 3 卧室，带热水浴缸和景观', why: '多人包车团、看星空', u: 'https://www.booking.com/hotel/nz/ohana-tekapo-vista-3br-hot-tub-stunning-views.zh-cn.html',
+      img: [
+        { src: 'https://cf.bstatic.com/xdata/images/hotel/max1024x768/628151361.jpg?k=72bca17e06770be152e3f3b883966baf753678bcda6ce5b74229cc5bd143e9c8&o=&hp=1', cap: '窗外景色' },
+        { src: 'https://cf.bstatic.com/xdata/images/hotel/max1024x768/628151363.jpg?k=cc0583773db232ae503fea28fc1753c7ae0cd61b2f35ae66a3cd52efe95cd6d4&o=&hp=1', cap: '热水浴缸' },
+        { src: 'https://cf.bstatic.com/xdata/images/hotel/max1024x768/628151370.jpg?k=619fe7ed0d405b6408dfb71b6b0687717dc17fd1e89caf2c1cbcd79b4e8b55bd&o=&hp=1', cap: '客厅' },
+        { src: 'https://cf.bstatic.com/xdata/images/hotel/max1024x768/628151371.jpg?k=ee7db75660273a8eb8aa3c8a27d8647ac255411157143c2c5641ef0ec4dfe9c7&o=&hp=1', cap: '卧室' },
+        { src: 'https://cf.bstatic.com/xdata/images/hotel/max1024x768/628151385.jpg?k=637e2b01438d560862959f836a4b99a1af1c69e0c8c764a0289a5d0f335c4f87&o=&hp=1', cap: '厨房' },
+      ] },
     ],
     acts: [
       { n: '好牧羊人教堂 Church of the Good Shepherd', p: 0, d: '30 分钟', t: '打卡' },
