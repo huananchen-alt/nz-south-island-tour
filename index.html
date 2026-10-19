@@ -318,11 +318,11 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://js.hcaptcha.com/1/api.js?render=explicit&hl=zh-CN" async defer></script>
-<script src="data.js?v=202610191513"></script>
-<script src="geo.js?v=202610191513"></script>
+<script src="data.js?v=202610191521"></script>
+<script src="geo.js?v=202610191521"></script>
 <script>
 // 页面版本（由 bump-version.sh 更新）。微信等浏览器会缓存旧页面，打开时和提交前都检查一次，过期就自动刷新
-const PAGE_VERSION = '202610191513';
+const PAGE_VERSION = '202610191521';
 const latestVersion = () => fetch(`version.json?t=${Date.now()}`, { cache: 'no-store' }).then(r => r.json()).then(d => d.v).catch(() => null);
 function reloadTo(v) {
   try { if (sessionStorage.getItem('reloaded') === v) return false; sessionStorage.setItem('reloaded', v); } catch {}
@@ -561,17 +561,17 @@ function popupHtml(id, r) {
 }
 
 /* ---------- 住宿推荐面板（数据见 data.js 里各地点的 hotels） ---------- */
-const HOTEL_LV = ['经济', '常规', '高端'];
+const HOTEL_LV = ['经济', '常规', '高端', '民宿'];
 function openHotels(id, lv) {
   const p = PLACES[id], hs = p.hotels || [];
   const list = hs.filter(h => !lv || h.lv === lv);
   $('#hbox').innerHTML = `<div class="hd"><h3>🏨 ${p.name} · 住宿推荐</h3><button type="button" class="x" id="hclose" title="关闭">✕</button></div>
-    ${hs.length ? `<div class="lvs">${['', ...HOTEL_LV].map(l => `<button type="button" data-lv="${l}" class="${(lv || '') === l ? 'on' : ''}">${l || '全部'}</button>`).join('')}</div>` : ''}
+    ${hs.length ? `<div class="lvs">${['', ...HOTEL_LV.filter(l => hs.some(h => h.lv === l))].map(l => `<button type="button" data-lv="${l}" class="${(lv || '') === l ? 'on' : ''}">${l || '全部'}</button>`).join('')}</div>` : ''}
     ${list.length ? list.map(h => `<div class="ht"><div class="top"><b>${h.n}</b>${h.lv ? `<span class="lv">${h.lv}</span>` : ''}</div>
       <div class="sub">${[h.loc, h.p ? `约 ${Array.isArray(h.p) ? mr(h.p) : money(h.p)}/间/晚` : ''].filter(Boolean).join(' · ')}</div>
       ${h.why ? `<div class="sub">✓ 适合：${h.why}</div>` : ''}
-      ${h.u ? `<a href="${h.u}" target="_blank" rel="noopener">官网 ↗</a>` : ''}</div>`).join('')
-      + '<p class="fine" style="margin:10px 0 0">* 价格为旺季参考价，以实际预订为准</p>'
+      ${h.u ? `<a href="${h.u}" target="_blank" rel="noopener">${/booking\.com/.test(h.u) ? '在 Booking 查看价格 / 预订' : '官网'} ↗</a>` : ''}</div>`).join('')
+      + '<p class="fine" style="margin:10px 0 0">* 价格以 Booking / 官网实时报价为准</p>'
       : `<div class="empty">${hs.length ? '该档次暂无推荐' : '住宿推荐整理中，敬请期待'}</div>`}`;
   $('#hsheet').hidden = false;
   $('#hclose').onclick = closeHotels;
