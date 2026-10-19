@@ -1,7 +1,7 @@
 // 新西兰南岛线路数据（价格单位：新西兰元 NZD，2026 旺季参考价，以实际预订为准）
 // stay = 每人每晚住宿价格区间 [常规, 高端]（按两人一间均摊；常规 = 3–4 星酒店/汽车旅馆，高端 = 当地高端酒店/精品度假屋）
 // hotels = 住宿推荐（地图弹窗里「🏨 住宿推荐」按钮显示；不写或为空则显示「整理中」，不参与报价）：
-//   { n: 名称, lv: '经济' | '常规' | '高端', p: 每间每晚参考价（或 [低, 高]）, loc: 位置特点, why: 适合谁, u: 官网 }
+//   { n: 名称, lv: '经济' | '常规' | '高端' | '民宿'（民宿 = 整栋 holiday house）, p: 每间每晚参考价（或 [低, 高]）, loc: 位置特点, why: 适合谁, u: 官网 }
 // 活动 p = 每人价格（0 = 免费；[低, 高] = 按档位的价格区间），d = 游玩时长，u = 官方网站，age = 年龄/身高/体重限制，hot = 强烈推荐
 
 const PLACES = {
@@ -15,6 +15,16 @@ const PLACES = {
     ] },
   tek: { name: '蒂卡波湖', en: 'Lake Tekapo', lat: -44.0047, lng: 170.4772, stay: [100, 350],
     intro: '牛奶蓝湖水 + 好牧羊人教堂 + 世界级暗夜星空保护区，11–12 月鲁冰花盛开。',
+    hotels: [
+      { n: 'Grand Suites Lake Tekapo', lv: '高端', loc: '套房酒店，Booking 评分 9.4', why: '追求舒适、带家人的客人', u: 'https://www.booking.com/hotel/nz/grand-suites-lake-tekapo.zh-cn.html' },
+      { n: 'The Godley Hotel', lv: '常规', loc: '主街上，步行到湖边和餐厅', why: '性价比、行程紧凑', u: 'https://www.booking.com/hotel/nz/the-godley.zh-cn.html' },
+      { n: 'Lakes Edge Holiday Park', lv: '经济', loc: '湖岸边的假日公园，汽车旅馆房和小屋', why: '预算有限、想住湖边', u: 'https://www.booking.com/hotel/nz/lake-tekapo-motels-amp-holiday-park-lake-tekapo.zh-cn.html' },
+      { n: 'Roto Cottage', lv: '民宿', loc: '整栋独立出租，Booking 评分 9.8', why: '情侣、小家庭', u: 'https://www.booking.com/hotel/nz/roto-cottage-lake-tekapo-lake-tekapo.zh-cn.html' },
+      { n: 'The Landsborough Tekapo', lv: '民宿', loc: '整栋独立出租，Booking 评分 9.7', why: '注重品质的家庭', u: 'https://www.booking.com/hotel/nz/17-rodman.zh-cn.html' },
+      { n: 'Tekapo Alps', lv: '民宿', loc: '整栋独立出租，Booking 评分 9.5', why: '家庭、朋友结伴', u: 'https://www.booking.com/hotel/nz/tekapo-alps.zh-cn.html' },
+      { n: 'Alpine Vista', lv: '民宿', loc: '整栋独立出租，Booking 评分 9.5', why: '家庭、朋友结伴', u: 'https://www.booking.com/hotel/nz/alpine-vista.zh-cn.html' },
+      { n: 'Ohana Tekapo Vista', lv: '民宿', loc: '整栋 3 卧室，带热水浴缸和景观', why: '多人包车团、看星空', u: 'https://www.booking.com/hotel/nz/ohana-tekapo-vista-3br-hot-tub-stunning-views.zh-cn.html' },
+    ],
     acts: [
       { n: '好牧羊人教堂 Church of the Good Shepherd', p: 0, d: '30 分钟', t: '打卡' },
       { n: '暗夜星空观星 Dark Sky Project', p: 165, d: '1.5 小时', t: '星空', u: 'https://www.darkskyproject.co.nz' },
