@@ -121,6 +121,8 @@
   .addon.on { border-color: var(--c); background: color-mix(in srgb, var(--c) 8%, white); }
   .addon input { margin-top: 3px; }
   .addon small { display: block; color: var(--muted); }
+  .clearbtn { margin-left: auto; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; border: 1px solid #f3c1c1; background: #fff5f5; color: #b42318; border-radius: 99px; padding: 4px 12px; font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer; }
+  .clearbtn:hover { background: #fde8e8; border-color: #e5484d; }
   .builder .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 12px; }
   .builder .chips button { border: 1px solid var(--line); background: var(--soft); border-radius: 99px; padding: 5px 11px; font: inherit; font-size: 13px; cursor: pointer; color: var(--ink); }
   .builder .chips button:hover { border-color: var(--c); }
@@ -316,11 +318,11 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://js.hcaptcha.com/1/api.js?render=explicit&hl=zh-CN" async defer></script>
-<script src="data.js?v=202610191454"></script>
-<script src="geo.js?v=202610191454"></script>
+<script src="data.js?v=202610191513"></script>
+<script src="geo.js?v=202610191513"></script>
 <script>
 // 页面版本（由 bump-version.sh 更新）。微信等浏览器会缓存旧页面，打开时和提交前都检查一次，过期就自动刷新
-const PAGE_VERSION = '202610191454';
+const PAGE_VERSION = '202610191513';
 const latestVersion = () => fetch(`version.json?t=${Date.now()}`, { cache: 'no-store' }).then(r => r.json()).then(d => d.v).catch(() => null);
 function reloadTo(v) {
   try { if (sessionStorage.getItem('reloaded') === v) return false; sessionStorage.setItem('reloaded', v); } catch {}
@@ -948,7 +950,7 @@ function builderHtml(r) {
   return `<section class="builder" style="--c:${r.color}">
     <h2>🧭 自由组合：按行程顺序点选地点</h2>
     <div class="row">岛屿 <span class="seg">${[['S', '南岛'], ['N', '北岛']].map(([k, n]) => `<button class="${isl === k ? 'on' : ''}" data-cisl="${k}">${n}</button>`).join('')}</span>
-      ${cs.length ? `<button class="tab" style="flex:0;padding:4px 12px" data-cclear>清空${isl === 'N' ? '北岛' : '南岛'}</button>` : ''}</div>
+      ${cs.length ? `<button type="button" class="clearbtn" data-cclear title="清空已选的${isl === 'N' ? '北岛' : '南岛'}地点">↺ 清空${isl === 'N' ? '北岛' : '南岛'}</button>` : ''}</div>
     <div class="chips">${ids.map(id => `<button data-cadd="${id}">＋ ${PLACES[id].name}${CUSTOM_PASS.includes(id) ? `（途经 · ${PLACES[id].acts[0].n.split(' ')[0]}）` : ''}</button>`).join('')}</div>
     ${cs.length ? `<ol>${cs.map((id, i) => `<li><span>${i + 1}</span><b>${PLACES[id].name}</b>
       <button data-cmove="${i}" data-cd="-1" title="上移" ${i === 0 ? 'disabled' : ''}>↑</button><button data-cmove="${i}" data-cd="1" title="下移" ${i === cs.length - 1 ? 'disabled' : ''}>↓</button><button data-crm="${i}" title="移除">✕</button></li>`).join('')}</ol>`
