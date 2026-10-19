@@ -312,8 +312,11 @@ const ADDONS = [
     nights: [0, 1, 0],
     legs:   [90, 90],
     legNotes: ['途经 Hilltop 观景点', ''] },
-  // 蒂阿瑙：从线路经过的皇后镇 / 瓦纳卡 / 但尼丁往返（按此顺序优先选最近的），住 1 晚
-  { id: 'teanau', hubs: ['zqn', 'wan', 'dun'], via: 'tea', name: '蒂阿瑙', sub: '从皇后镇 / 瓦纳卡 / 但尼丁往返 · 萤火虫洞' },
+  { id: 'teanau', hub: 'zqn', name: '蒂阿瑙', sub: '从皇后镇往返 · 萤火虫洞',
+    stops:  ['zqn', 'tea', 'zqn'],
+    nights: [0, 1, 0],
+    legs:   [120, 120],
+    legNotes: ['', '原路返回皇后镇'] },
 ];
 
 // 包车车型（每天价格，NZD）
