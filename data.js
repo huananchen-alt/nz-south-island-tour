@@ -312,11 +312,6 @@ const ADDONS = [
     nights: [0, 1, 0],
     legs:   [90, 90],
     legNotes: ['途经 Hilltop 观景点', ''] },
-  { id: 'teanau', hub: 'zqn', name: '蒂阿瑙', sub: '从皇后镇往返 · 萤火虫洞',
-    stops:  ['zqn', 'tea', 'zqn'],
-    nights: [0, 1, 0],
-    legs:   [120, 120],
-    legNotes: ['', '原路返回皇后镇'] },
 ];
 
 // 包车车型（每天价格，NZD）
